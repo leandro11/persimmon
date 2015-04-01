@@ -1,0 +1,168 @@
+{% extends "member/base_site.html" %}
+{% load i18n admin_urls admin_static admin_modify %}
+
+{% block extrahead %}{{ block.super }}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+{{ media }}
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static "style/css/forms.css" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static "style/css/dashboard.css" %}" />
+{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-form{% endblock %}
+
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="/member/main">会员首页</a>
+&rsaquo; {{ opts.verbose_name_plural|capfirst }}
+&rsaquo; {{ original.name|truncatewords:"18" }}
+</div>
+{% endblock %}
+{% endif %}
+
+{% block content %}<div id="content-main">
+{% block object-tools %}
+
+{% endblock %}
+<form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form" novalidate>{% csrf_token %}{% block form_top %}{% endblock %}
+<div>
+{% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1" />{% endif %}
+{% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}" />{% endif %}
+{% if save_on_top %}{% block submit_buttons_top %}{% submit_row %}{% endblock %}{% endif %}
+{% if errors %}
+    <p class="errornote">
+    {% if errors|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+    </p>
+    {{ adminform.form.non_field_errors }}
+{% endif %}
+
+{% block field_sets %}
+{% for fieldset in adminform %}
+  {% include "admin/includes/fieldset.html" %}
+{% endfor %}
+
+<script type="text/javascript">
+
+function panel_switch(id_name)
+{
+    ele=document.getElementById(id_name);
+    if(ele.style.display=='none')
+    {
+        document.getElementById(id_name+"-status").innerText="∧";
+        ele.style.display='block';
+    }else{
+        document.getElementById(id_name+"-status").innerText="∨";
+        ele.style.display='none';
+    }
+}
+
+</script>
+
+
+<div class="inline-group" id="bankcontactor-group">
+  <a href="" onclick="panel_switch('agreements');return false;"><h2><span id="agreements-status">∧</span> 企业资质</h2></a>
+
+
+<div class="inline-related has_original" id="agreements" style="display:none">
+
+        <table width="100%">
+            <tr>
+
+                <td style="width:133px"><h2>营业执照</h2><br/>
+                    {% if is_contactor %}{% endif %}
+                    <a href="/member/enterpriseattachment/add/"><b>新增营业执照</b></a><br/><br/>
+                    <a href="/member/enterprise/{{ enterprise_id }}/identification"><b>查看全部</b></a>
+                </td>
+
+
+                {% for licence in licences %}
+                    <td>
+                    {% if licence.thumbnail %}
+                        <a target="_blank" href="/enterprise/{{ enterprise_id }}/attachment/{{ licence.name }}"><img width="100px" src="/enterprise/{{ enterprise_id }}/attachment/thumbnail/{{ licence.name }}"></a>
+                    {% else %}
+                        <a target="_blank" href="{{ licence.file.url }}"><img width="100px" src="/static/style/img/doc.png"></a>
+                    {% endif %}
+                    <br/>{{ licence.create_time | date:'y/m/j H:i' }}
+                    </td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td>
+                    <h2>组织机构代码</h2><br/>
+                    {% if is_contactor %}{% endif %}
+                    <a href="/member/enterpriseattachment/add/"><b>新增组织机构代码</b></a><br/><br/>
+                    <a href="/member/enterprise/{{ enterprise_id }}/identification"><b>查看全部</b></a>
+                </td>
+                {% for code in organization_codes %}
+                    <td>
+                    {% if code.thumbnail %}
+                        <a target="_blank" href="/enterprise/{{ enterprise_id }}/attachment/{{ code.name }}"><img width="100px" src="/enterprise/{{ enterprise_id }}/attachment/thumbnail/{{ code.name }}"></a>
+                    {% else %}
+                        <a target="_blank" href="{{ code.file.url }}"><img width="100px" src="/static/style/img/doc.png"></a>
+                    {% endif %}
+                    <br/>{{ code.create_time | date:'y/m/j H:i' }}
+                    </td>
+                {% endfor %}
+            </tr>
+            <tr>
+                <td>
+                    <h2>税务登记证</h2><br/>
+                    {% if is_contactor %}{% endif %}
+                    <a href="/member/enterpriseattachment/add/"><b>新增税务登记证</b></a><br/><br/>
+                    <a href="/member/enterprise/{{ enterprise_id }}/identification"><b>查看全部</b></a>
+                </td>
+                {% for tax in tax_registerations %}
+                    <td>
+                    {% if tax.thumbnail %}
+                        <a target="_blank" href="/enterprise/{{ enterprise_id }}/attachment/{{ tax.name }}"><img width="100px" src="/enterprise/{{ enterprise_id }}/attachment/thumbnail/{{ tax.name }}"></a>
+                    {% else %}
+                        <a target="_blank" href="{{ tax.file.url }}"><img width="100px" src="/static/style/img/doc.png"></a>
+                    {% endif %}
+                    <br/>{{ tax.create_time | date:'y/m/j H:i' }}
+                    </td>
+                {% endfor %}
+            </tr>
+        </table>
+</div>
+
+</div>
+
+{% endblock %}
+
+{% block after_field_sets %}{% endblock %}
+
+<div name="inline" id="inline" style="clear:both" ></div>
+
+{% block inline_field_sets %}
+{% for inline_admin_formset in inline_admin_formsets %}
+    {% include inline_admin_formset.opts.template %}
+{% endfor %}
+{% endblock %}
+
+{% block after_related_objects %}{% endblock %}
+
+{% if adminform and add %}
+    <script type="text/javascript">
+        (function($) {
+            $(document).ready(function() {
+                $('form#{{ opts.model_name }}_form :input:visible:enabled:first').focus()
+            });
+        })(django.jQuery);
+    </script>
+{% endif %}
+
+{# JavaScript for prepopulated fields #}
+{% prepopulated_fields_js %}
+
+</div>
+</form></div>
+
+{% endblock %}
+
+
+ <!-- template name: enterprise_display_form.html -->

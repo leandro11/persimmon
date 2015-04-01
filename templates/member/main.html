@@ -1,0 +1,138 @@
+{% extends "member/base_site.html" %}
+{% load i18n admin_static transaction_tags %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "style/css/dashboard.css" %}" />{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+
+
+        欢迎登陆，{{ user_profile.groupname }} {{ user_profile.name }}
+
+</br>
+</br>
+
+
+<div id="content-main">
+{% if pending_claim %}
+    <div class="app-user module">
+    <table id="formset" class="form">
+    <caption>等待审核的贴现申请</caption>
+      <thead><tr>
+        <th>汇票单号</th>
+        <th>收款企业</th>
+        <th>付款企业</th>
+        <th>贴现银行</th>
+        <th>承兑银行</th>
+        <th>贴现金额</th>
+        <th>订单状态</th>
+        <th>申请时间</th>
+      </tr></thead>
+    {% for claim in pending_claim %}
+      <tr class="{% cycle row1,row2 %}">
+        <td><b><a href="/transaction/transactionclaim/{{ claim.id }}/"> {{ claim.ticket_number  }}</a></b></td>
+        <td>{{ claim.receivable_enterprise.name  }}</td>
+        <td>{{ claim.pay_enterprise  }}</td>
+        <td>{{ claim.ticket_bank  }}</td>
+        <td>{{ claim.accept_bank }}</td>
+        <td>{{ claim.amount  }}</td>
+        <td>{{ claim.get_status_display   }}</td>
+        <td>{{ claim.create_time   }}</td>
+      </tr>
+    {% endfor %}
+      <tr>
+        <td colspan="10" style="text-align: center"><b><a href="/transaction/transactionorder/?status__exact=PROCESSING">查看全部</a></b></td>
+      </tr>
+    </table>
+    </div>
+    <br/>
+{% endif %}
+
+    <div class="app-user module">
+    <table id="formset" class="form">
+    <caption>正在进行的贴现服务</caption>
+      <thead><tr>
+        <th>汇票单号</th>
+        <th>收款企业</th>
+        <th>付款企业</th>
+        <th>贴现银行</th>
+        <th>承兑银行</th>
+        <th>贴现金额</th>
+        <th>服务类型</th>
+        <th>服务费</th>
+        <th>订单状态</th>
+        <th>角色</th>
+        <th>开始时间</th>
+      </tr></thead>
+    {% for order in ongoing_orders %}
+      <tr class="row2">
+        <td><b><a href="/transaction/transactionorder/{{ order.id }}/"> {{ order.ticket_number  }}</a></b></td>
+        <td>{{ order.receivable_enterprise.name  }}</td>
+        <td>{{ order.pay_enterprise.name  }}</td>
+        <td>{{ order.ticket_bank.name  }}</td>
+        <td>{{ order.accept_bank.name  }}</td>
+        <td>{{ order.amount  }}</td>
+        <td>{{ order.type  }}</td>
+        <td>{{ order.fee  }}</td>
+        <td>{{ order.get_status_display   }}</td>
+        <td>{{ order.role   }}</td>
+        <td>{{ order.create_time   }}</td>
+      </tr>
+      {{ order|get_processing_operation|safe }}
+    {% endfor %}
+      <tr>
+        <td colspan="11" style="text-align: center"><b><a href="/transaction/transactionorder/?status__exact=PROCESSING">查看全部</a></b></td>
+      </tr>
+    </table>
+    </div>
+<br/>
+    <div class="app-user module">
+    <table id="formset" class="form">
+    <caption>已完成的贴现服务</caption>
+      <thead><tr>
+        <th>汇票单号</th>
+        <th>收款企业</th>
+        <th>付款企业</th>
+        <th>贴现银行</th>
+        <th>承兑银行</th>
+        <th>贴现金额</th>
+        <th>服务类型</th>
+        <th>服务费</th>
+        <th>汇票</th>
+        <th>发票</th>
+        <th>角色</th>
+        <th>完成时间</th>
+      </tr></thead>
+    {% for order in finished_orders %}
+      <tr class="{% cycle row2,row1 %}">
+        <td><b><a href="/transaction/transactionorder/{{ order.id }}"> {{ order.ticket_number  }}</a></b></td>
+        <td>{{ order.receivable_enterprise.name  }}</td>
+        <td>{{ order.pay_enterprise.name  }}</td>
+        <td>{{ order.ticket_bank.name  }}</td>
+        <td>{{ order.accept_bank.name  }}</td>
+        <td>{{ order.amount  }}</td>
+        <td>{{ order.type  }}</td>
+        <td>{{ order.fee  }}</td>
+        <td>{{ order.get_ticket_status_display }}</td>
+        <td>{{ order.get_invoice_status_display }}</td>
+        <td>{{ order.role   }}</td>
+        <td>{{ order.finish_time   }}</td>
+      </tr>
+    {% endfor %}
+      <tr>
+        <td colspan="12" style="text-align: center"><b><a href="/transaction/transactionorder/?status__exact=DONE">查看全部</a></b></td>
+      </tr>
+    </table>
+    </div>
+
+<br/>
+
+</div>
+{% endblock %}
+
+

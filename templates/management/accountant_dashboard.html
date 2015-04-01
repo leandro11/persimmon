@@ -1,0 +1,162 @@
+{% extends "management/base_site.html" %}
+{% load i18n admin_static transaction_tags %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "style/css/dashboard.css" %}" />{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+欢迎登陆，{{ user_profile.groupname }} {{ user_profile.name }}
+</br>
+</br>
+<div id="content-main">
+    <div class="app-user module">
+    <table id="formset" class="form">
+    <caption>未开发票的贴现服务</caption>
+      <thead><tr>
+        <th>汇票单号</th>
+        <th>收款企业</th>
+        <th>付款企业</th>
+        <th>贴现银行</th>
+        <th>承兑银行</th>
+        <th>贴现金额</th>
+        <th>服务类型</th>
+        <th>服务费</th>
+        <th>订单状态</th>
+        <th>开始时间</th>
+      </tr></thead>
+    {% if ongoing_orders %}
+        {% for order in ongoing_orders %}
+            <tr class="row2">
+            <td><b><a href="/staff/transaction/transactionorder/{{ order.id }}/add_invoice"> {{ order.ticket_number }}</a></b></td>
+            <td>{{ order.receivable_enterprise.name  }}</td>
+            <td>{{ order.pay_enterprise.name  }}</td>
+            <td>{{ order.ticket_bank.name  }}</td>
+            <td>{{ order.accept_bank.name  }}</td>
+            <td>{{ order.amount  }}</td>
+            <td>{{ order.type  }}</td>
+            <td>{{ order.fee  }}</td>
+            <td>{{ order.get_status_display   }}</td>
+            <td>{{ order.create_time   }}</td>
+            </tr>
+        {{ order|get_processing_operation|safe }}
+        {% endfor %}
+        <tr>
+            <td colspan="11" style="text-align: center"><b><a href="/staff/transaction/transactionorder/?invoice_status__exact=UNLODGED">查看全部</a></b></td>
+        </tr>
+    {% endif %}
+    </table>
+    </div>
+<br/>
+
+    <div class="app-user module">
+    <table id="formset" class="form">
+    <caption>已开具未寄出的发票</caption>
+      <thead><tr>
+        <th>发票单号</th>
+        <th>金额</th>
+        <th>贴现服务订单</th>
+        <th>开票市场经理</th>
+        <th>寄出EMS</th>
+        <th>创建时间</th>
+        <th>发票寄出</th>
+      </tr></thead>
+    {% if lodged_invoices %}
+        {% for order in lodged_invoices %}
+            <tr class="row2">
+            <td><b><a href="/staff/ticket/invoice/{{ order.id }}/"> {{ order.number }}</a></b></td>
+            <td>{{ order.amount }}</td>
+            <td>{{ order.transaction.ticket_number }}</td>
+            <td>{{ order.market_manager.name }}</td>
+            <td>{{ order.send_ems }}</td>
+            <td>{{ order.create_time }}</td>
+            <td>{{ order.send_invoice_link | safe }}</td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="11" style="text-align: center"><b><a href="/staff/ticket/invoice/?status__exact=LODGED">查看全部</a></b></td>
+        </tr>
+    {% endif %}
+    </table>
+    </div>
+
+    <div class="app-user module">
+    <table id="formset" class="form">
+    <caption>已寄出发票</caption>
+      <thead><tr>
+        <th>发票单号</th>
+        <th>金额</th>
+        <th>贴现服务订单</th>
+        <th>开票市场经理</th>
+        <th>寄出EMS</th>
+        <th>创建时间</th>
+        <th>发票寄出</th>
+      </tr></thead>
+    {% if finished_invoices %}
+        {% for order in finished_invoices %}
+            <tr class="row2">
+            <td><b><a href="/staff/ticket/invoice/{{ order.id }}"> {{ order.number }}</a></b></td>
+            <td>{{ order.amount }}</td>
+            <td>{{ order.transaction.ticket_number }}</td>
+            <td>{{ order.market_manager.name }}</td>
+            <td>{{ order.send_ems }}</td>
+            <td>{{ order.create_time }}</td>
+            <td>{{ order.send_invoice_link | safe }}</td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="11" style="text-align: center"><b><a href="/staff/ticket/invoice/?status__exact=FINISHED">查看全部</a></b></td> </tr>
+    {% endif %}
+    </table>
+    </div>
+<br/>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<div id="content-related">
+    <div class="module" id="recent-actions-module">
+        <h2>导航菜单</h2>
+        <h3>贴现服务</h3>
+            <ul class="actionlist">
+            <br/>
+            <li class="changelink">
+                    <a href="/staff/transaction/transactionorder/?invoice_status__exact=UNLODGED">未开发票的贴现服务</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/staff/transaction/transactionorder/?invoice_status__in=LODGED,FINISHED">已开发票的贴现服务</a>
+                <br/><br/>
+            </li>
+            </ul>
+        <h3>发票管理</h3>
+            <ul class="actionlist">
+            <br/>
+            <li class="changelink">
+                    <a href="/staff/ticket/invoice/?status__exact=LODGED">已开具</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/staff/ticket/invoice/?status__exact=FINISHED">已寄出</a>
+                <br/><br/>
+            </li>
+            </ul>
+        <h3>{% trans '安全设置' %}</h3>
+            <ul class="actionlist">
+                <br/>
+            <li class="changelink">
+                    <a href="/staff/management/staff/{{ user_id }}/">查看信息</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/management/password_change/">修改密码</a>
+                <br/><br/>
+            </li>
+            </ul>
+    </div>
+</div>
+{% endblock %}

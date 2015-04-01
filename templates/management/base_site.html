@@ -1,0 +1,50 @@
+{% extends "management/base.html" %}
+
+{% block title %}{{ title }} | {{ _('怡智融通贴现管理系统') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><b><a href="/management/main">{{ _('怡智融通贴现管理系统') }}</a></b></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block sidebar %}
+<div id="content-related">
+    <div class="module" id="recent-actions-module">
+        <h2>导航菜单</h2>
+        <h3>贴现服务</h3>
+            <ul class="actionlist">
+            <br/>
+            <li class="changelink">
+                    <a href="/transaction/transactionorder/?status__exact=PROCESSING">进行中的贴现</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/transaction/transactionorder/?status__exact=DONE">已完成的贴现</a>
+                <br/><br/>
+            </li>
+            </ul>
+        <h3>会员单位</h3>
+            <ul class="actionlist">
+            <br/>
+            <li class="changelink">
+                    <a href="/management//">查看单位信息</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                <a href="/management/{{ member_type }}operator/{{ user_profile.id }}">修改个人资料</a>
+                <br/><br/>
+            </li>
+            </ul>
+        <h3>安全设置</h3>
+
+            <ul class="actionlist">
+                <br/>
+            <li class="changelink">
+                    <a href="/management/password_change/">修改密码</a>
+                <br/><br/>
+            </li>
+            </ul>
+    </div>
+</div>
+{% endblock %}

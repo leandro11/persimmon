@@ -1,0 +1,226 @@
+{% extends "management/base_site.html" %}
+{% load i18n admin_static transaction_tags %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "style/css/dashboard.css" %}" />{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+欢迎登陆，{{ user_profile.groupname }} {{ user_profile.name }}
+</br>
+</br>
+<div id="content-main">
+    <!--div class="app-user module">
+    <table id="formset" class="form">
+    <caption>历史邀请码记录</caption>
+      <thead><tr>
+        <th>会员名称</th>
+        <th>会员类型</th>
+        <th>邀请码</th>
+        <th>邀请码状态</th>
+        <th>市场经理</th>
+        <th>申请时间</th>
+      </tr></thead>
+    {% if historical_invitations %}
+        {% for code in historical_invitations %}
+            <tr class="{% cycle row1,row2 %}">
+            <td><b><a href="/staff/member/registerinvitationcode/{{ code.id }}/"> {{ code.member_name }}</a></b></td>
+            <td>{{ code.get_member_type_display }}</td>
+            <td>{{ code.code }}</td>
+            <td>{{ code.get_status_display }}</td>
+            <td>{{ code.market_manager.name }}</td>
+            <td>{{ code.create_date }}</td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="10" style="text-align: center"><b><a href="/staff/member/registerinvitationcode/">查看全部</a></b></td>
+        </tr>
+    {% endif %}
+    </table>
+    </div>
+<br/-->
+    <div class="app-user module">
+    <table id="formset" class="form">
+    <caption>等待审核的贴现申请</caption>
+      <thead><tr>
+        <th>汇票单号</th>
+        <th>收款企业</th>
+        <th>付款企业</th>
+        <th>贴现银行</th>
+        <th>承兑银行</th>
+        <th>贴现金额</th>
+        <th>订单状态</th>
+        <th>申请时间</th>
+      </tr></thead>
+    {% if pending_claim %}
+        {% for claim in pending_claim %}
+            <tr class="{% cycle row1,row2 %}">
+            <td><b><a href="/staff/transaction/transactionclaim/{{ claim.id }}/confirm"> {{ claim.ticket_number  }}</a></b></td>
+            <td>{{ claim.receivable_enterprise.name  }}</td>
+            <td>{{ claim.pay_enterprise  }}</td>
+            <td>{{ claim.ticket_bank  }}</td>
+            <td>{{ claim.accept_bank }}</td>
+            <td>{{ claim.amount  }}</td>
+            <td>{{ claim.get_status_display   }}</td>
+            <td>{{ claim.create_time   }}</td>
+            </tr>
+        {% endfor %}
+        <tr>
+            <td colspan="10" style="text-align: center"><b><a href="/staff/transaction/transactionclaim/?status__exact=pending">查看全部</a></b></td>
+        </tr>
+    {% endif %}
+    </table>
+    </div>
+<br/>
+    <div class="app-user module">
+    <table id="formset" class="form">
+    <caption>待审核的企业会员</caption>
+      <thead><tr>
+        <th>企业名称</th>
+        <th>省份</th>
+        <th>会员星级</th>
+        <th>会员状态</th>
+        <th>服务市场经理</th>
+        <th>注册时间</th>
+      </tr></thead>
+    {% if enterprise_customers %}
+        {% for member in enterprise_customers %}
+            <tr class="{% cycle row2,row1 %}">
+            <td><b><a href="/staff/member/enterprise/{{ member.id }}/confirm"> {{ member.name }}</a></b></td>
+            <td>{{ member.province.name }}</td>
+            <td>{{ member.get_level_display }}</td>
+            <td>{{ member.get_status_display }}</td>
+            <td>{{ member.referee_manager.name }}</td>
+            <td>{{ member.create_date }}</td>
+            </tr>
+        {% endfor %}
+        <tr>
+        <td colspan="12" style="text-align: center"><b><a href="/staff/member/enterprise/?status__exact=Pending">查看全部</a></b></td>
+        </tr>
+    {% endif  %}
+    </table>
+    </div>
+
+    <div class="app-user module">
+    <table id="formset" class="form">
+    <caption>待审核的银行会员</caption>
+      <thead><tr>
+        <th>银行全称</th>
+        <th>省份</th>
+        <th>会员星级</th>
+        <th>会员状态</th>
+        <th>服务市场经理</th>
+        <th>注册时间</th>
+      </tr></thead>
+    {% if bank_customers %}
+        {% for member in bank_customers %}
+            <tr class="{% cycle row2,row1 %}">
+            <td><b><a href="/staff/member/bank/{{ member.id }}/confirm"> {{ member.name }}</a></b></td>
+            <td>{{ member.province.name }}</td>
+            <td>{{ member.get_level_display }}</td>
+            <td>{{ member.get_status_display }}</td>
+            <td>{{ member.referee_manager.name }}</td>
+            <td>{{ member.create_date }}</td>
+            </tr>
+        {% endfor %}
+        <tr>
+        <td colspan="12" style="text-align: center"><b><a href="/staff/member/bank/?status__exact=Pending">查看全部</a></b></td>
+        </tr>
+    {% endif  %}
+    </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<div id="content-related">
+    <div class="module" id="recent-actions-module">
+        <h2>导航菜单</h2>
+        <h3>邀请码</h3>
+            <ul class="actionlist">
+            <br/>
+            <li class="changelink">
+                    <a href="/staff/member/registerinvitationcode/">查看历史邀请码</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/staff/member/registerinvitationcode/add/">生成新的邀请码</a>
+                <br/><br/>
+            </li>
+            </ul>
+        <h3>贴现服务</h3>
+            <ul class="actionlist">
+            <br/>
+            <li class="changelink">
+                    <a href="/staff/transaction/transactionorder/?status__exact=PROCESSING">进行中的贴现</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/staff/transaction/transactionorder/?status__exact=DONE">已完成的贴现</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/staff/transaction/transactionorder/?status__exact=ABORT">过期的贴现服务</a>
+                <br/><br/>
+            </li>
+            </ul>
+        <h3>{% trans '企业会员单位' %}</h3>
+            <ul class="actionlist">
+            <br/>
+            <li class="changelink">
+                    <a href="/staff/member/enterprise/?status__exact=Pending">待审核的企业会员</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/staff/member/enterprise/?status__exact=Enabled">普通企业会员</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/staff/member/enterprise/?status__exact=Disabled">禁用企业会员</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/staff/member/enterprise/?status__exact=Expired">过期企业会员</a>
+                <br/><br/>
+            </li>
+            </ul>
+        <h3>{% trans '银行会员单位' %}</h3>
+            <ul class="actionlist">
+            <br/>
+            <li class="changelink">
+                    <a href="/staff/member/bank/?status__exact=Pending">待审核的银行会员</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/staff/member/bank/?status__exact=Enabled">普通银行会员</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/staff/member/bank/?status__exact=Disabled">禁用银行会员</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/staff/member/bank/?status__exact=Expired">过期银行会员</a>
+                <br/><br/>
+            </li>
+            </ul>
+
+        <h3>{% trans '安全设置' %}</h3>
+            <ul class="actionlist">
+                <br/>
+            <li class="changelink">
+                    <a href="/staff/management/staff/{{ user_id }}/">查看信息</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/management/password_change/">修改密码</a>
+                <br/><br/>
+            </li>
+            </ul>
+    </div>
+</div>
+{% endblock %}

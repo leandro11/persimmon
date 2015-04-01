@@ -1,0 +1,25 @@
+{% extends "member/base_site.html" %}
+{% load i18n admin_urls admin_static admin_modify %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "style/css/dashboard.css" %}" />{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="/member/main">会员首页</a>
+</div>
+{% endblock %}
+
+
+
+{% block content %}
+<br/>
+<div id="content-main">
+    {{ info | safe }}
+</div>
+{% endblock %}
+
+<!-- management/notify.html -->

@@ -1,0 +1,17 @@
+{% extends "member/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="/member/main">会员首页</a></div>{% endblock %}
+
+{% block welcome-msg %}{% endblock %}
+
+{% block userlinks %}{% endblock %}
+{% block sidebar %}{% endblock %}
+
+{% block content %}
+
+<p>{% trans "Thanks for spending some quality time with the Web site today." %}</p>
+
+<p><a href="/member/login">{% trans 'Log in again' %}</a></p>
+
+{% endblock %}

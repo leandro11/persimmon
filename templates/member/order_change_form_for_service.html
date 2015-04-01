@@ -1,0 +1,345 @@
+{% extends "member/base_site.html" %}
+{% load i18n admin_urls admin_static admin_modify transaction_tags %}
+
+
+{% block extrahead %}{{ block.super }}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+{{ media }}
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static "style/css/forms.css" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static "style/css/dashboard.css" %}" />
+{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-form{% endblock %}
+
+{% block object-tools %}{% endblock %}
+
+
+{% if not is_popup %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="/member/main">会员首页</a>
+&rsaquo; {{ opts.verbose_name_plural|capfirst }}
+&rsaquo; {{ original.name|truncatewords:"18" }}
+</div>
+{% endblock %}
+{% endif %}
+
+{% block content %}<div id="content-main" style="width:100%">
+
+<form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form" novalidate>{% csrf_token %}{% block form_top %}{% endblock %}
+<div>
+{% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1" />{% endif %}
+{% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}" />{% endif %}
+{% if save_on_top %}{% block submit_buttons_top %}{% submit_row %}{% endblock %}{% endif %}
+{% if errors %}
+    <p class="errornote">
+    {% if errors|length == 1 %}{% trans "Please correct the error below." %}{% else %}{% trans "Please correct the errors below." %}{% endif %}
+    </p>
+    {{ adminform.form.non_field_errors }}
+{% endif %}
+
+{% block field_sets %}
+{% for fieldset in adminform %}
+  {% include "admin/includes/fieldset.html" %}
+{% endfor %}
+{% endblock %}
+
+{% block after_field_sets %}{% endblock %}
+
+
+{% block inline_field_sets %}
+{% for inline_admin_formset in inline_admin_formsets %}
+    {% include inline_admin_formset.opts.template %}
+{% endfor %}
+{% endblock %}
+
+{% block after_related_objects %}{% endblock %}
+
+
+{# JavaScript for prepopulated fields #}
+{% prepopulated_fields_js %}
+
+</div>
+</form>
+<fieldset class="module" id="operation_table">
+<h2>贴现操作流程</h2>
+<table style="width: 100%">
+    <thead><tr>
+        <th style="width:7%">流程状态</th>
+        <th style="width:13%">流程操作方</th>
+        <th>操作内容</th>
+        <th style="width:7%">执行人</th>
+        <th style="width:11%">客服审核</th>
+        <th style="width:15%">完成时间</th>
+    </tr></thead>
+    <tbody>
+        {% for operation in operation_list %}
+        <tr {% if operation.status == OPERATION_ACTIVATED or operation.status == OPERATION_PENDING  %} style="background: #ffa"
+            {% elif operation.status == OPERATION_FINISHED %} style="background: #ddd" {% endif %} class="form-row has_original">
+
+            <form name="operation_{{ operation.id }}" enctype="multipart/form-data" id="operation_{{ operation.id }}" action="/admin/transaction/transactionoperation/submit/" method="post">
+            {% csrf_token %}
+            <td>
+                  {% if operation.status == OPERATION_FINISHED %}
+                    <img src="/static/admin/img/icon_success.gif" alt="已完成" />已完成
+                  {% elif operation.status == OPERATION_UNACTIVATED %}
+                    <img src="/static/admin/img/icon_error.gif" alt="未开始" />未开始
+                  {% elif operation.status == OPERATION_ACTIVATED %}
+                    <img src="/static/admin/img/icon_clock.gif" alt="进行中" />进行中
+                  {% elif operation.status == OPERATION_PENDING %}
+                    <img src="/static/admin/img/icon_alert.gif" alt="待审核" />待审核
+                  {% endif %}
+            </td>
+            <td>
+            <div style="position:relaitve;">
+                <input type="hidden" value="{{ operation.operator_member }}" name="member_type" id="member_type">
+                <a onclick="ShowTips('{{ operation.operator_member }}_{{ operation.id }}');return false;" title="点击查看信息"
+
+                {% if operation.operator_member == OPERATOR_RECEIVER %}
+                    href="#{{ order.receivable_enterprise.id }}">
+                    <img src="/static/style/img/icon_info.png"><strong>{{ order.receivable_enterprise }}</strong></a>
+                    <input type="hidden" value="{{ order.receivable_enterprise.id }}" name="member_id" id="member_id">
+                    <div unselectable="on" id="{{ operation.operator_member }}_{{ operation.id }}" class="tipscontent" style="display: none">
+                        <b>{{ order.receivable_enterprise.name }}</b>
+                        <a style="float:right" href="#{{ operation.operator_member }}_{{ operation.id }}" onclick="ShowTips('{{ operation.operator_member }}_{{ operation.id }}');return false;">[关闭窗口]</a><br/>
+                        会员等级：{{ order.receivable_enterprise.level }}星会员<br/>
+                        地址：{{ order.receivable_enterprise.address }}<br/>
+                        传真：{{ order.receivable_enterprise.fax_number }}<br/>
+                        联络人：{{ order.receivable_enterprise.contactor.name }}<br/>
+                        联络人电话：{{ order.receivable_enterprise.contactor.mobile_number }}<br/>
+                        联络人邮箱：{{ order.receivable_enterprise.contactor.email }}<br/>
+                    </div>
+                {% elif operation.operator_member == OPERATOR_PAYER %}
+                    href="#{{ order.pay_enterprise.id }}">
+                    <img src="/static/style/img/icon_info.png"><strong>{{ order.pay_enterprise }}</strong></a>
+                    <input type="hidden" value="{{ order.pay_enterprise.id }}" name="member_id" id="member_id">
+                    <div unselectable="on" id="{{ operation.operator_member }}_{{ operation.id }}" class="tipscontent" style="display: none">
+                        <b>{{ order.pay_enterprise.name }}</b>
+                        <a style="float:right" href="#{{ operation.operator_member }}_{{ operation.id }}" onclick="ShowTips('{{ operation.operator_member }}_{{ operation.id }}');return false;">[关闭窗口]</a><br/>
+                        会员等级：{{ order.pay_enterprise.level }}星会员<br/>
+                        地址：{{ order.pay_enterprise.address }}<br/>
+                        传真：{{ order.pay_enterprise.fax_number }}<br/>
+                        联络人：{{ order.pay_enterprise.contactor.name }}<br/>
+                        联络人电话：{{ order.pay_enterprise.contactor.mobile_number }}<br/>
+                        联络人邮箱：{{ order.pay_enterprise.contactor.email }}<br/>
+                    </div>
+                {% elif operation.operator_member == OPERATOR_TICKETBANK %}
+                    href="#{{ order.ticket_bank.id }}">
+                    <img src="/static/style/img/icon_info.png"><strong>{{ order.ticket_bank.short_name }}</strong></a>
+                    <input type="hidden" value="{{ order.ticket_bank.id }}" name="member_id" id="member_id">
+                    <div unselectable="on" id="{{ operation.operator_member }}_{{ operation.id }}" class="tipscontent" style="display: none">
+                        <b>{{ order.ticket_bank.name }}</b>
+                        <a style="float:right" href="#{{ operation.operator_member }}_{{ operation.id }}" onclick="ShowTips('{{ operation.operator_member }}_{{ operation.id }}');return false;">[关闭窗口]</a><br/>
+                        会员等级：{{ order.ticket_bank.level }}星会员<br/>
+                        地址：{{ order.ticket_bank.address }}<br/>
+                        传真：{{ order.ticket_bank.fax_number }}<br/>
+                        联络人：{{ order.ticket_bank.contactor.name }}<br/>
+                        联络人电话：{{ order.ticket_bank.contactor.mobile_number }}<br/>
+                        联络人邮箱：{{ order.ticket_bank.contactor.email }}<br/>
+                    </div>
+                {% elif operation.operator_member == OPERATOR_ACCEPTBANK %}
+                    href="#{{ order.accept_bank.id }}">
+                    <img src="/static/style/img/icon_info.png"><strong>{{ order.accept_bank.short_name }}</strong></a>
+                    <input type="hidden" value="{{ order.accept_bank.id }}" name="member_id" id="member_id">
+                    <div unselectable="on" id="{{ operation.operator_member }}_{{ operation.id }}" class="tipscontent" style="display: none">
+                        <b>{{ order.accept_bank.name }}</b>
+                        <a style="float:right" href="#{{ operation.operator_member }}_{{ operation.id }}" onclick="ShowTips('{{ operation.operator_member }}_{{ operation.id }}');return false;">[关闭窗口]</a><br/>
+                        会员等级：{{ order.accept_bank.level }}星会员<br/>
+                        地址：{{ order.accept_bank.address }}<br/>
+                        传真：{{ order.accept_bank.fax_number }}<br/>
+                        联络人：{{ order.accept_bank.contactor.name }}<br/>
+                        联络人电话：{{ order.accept_bank.contactor.mobile_number }}<br/>
+                        联络人邮箱：{{ order.accept_bank.contactor.email }}<br/>
+                    </div>
+                {% elif operation.operator_member == OPERATOR_PLATFORM %}
+                    href="#{{ operation.operator_member }}">
+                    <img src="/static/style/img/icon_info.png"><strong>怡智融通</strong></a>
+                    <input type="hidden" value="" name="member_id" id="member_id">
+                    <div unselectable="on" id="{{ operation.operator_member }}_{{ operation.id }}" class="tipscontent" style="display: none">
+                        <b>怡智融通</b>
+                        <a style="float:right" href="#{{ operation.operator_member }}_{{ operation.id }}" onclick="ShowTips('{{ operation.operator_member }}_{{ operation.id }}');return false;">[关闭窗口]</a><br/>
+                        传真：1234567890<br/>
+                        客服电话：010-12345678<br/>
+                        <a href="111">在线联系客服</a>
+                    </div>
+                {% endif %}
+            </div>
+            </td>
+            <td> <!-- 操作内容 -->
+                {{ operation.description | safe }}
+
+                {% if operation.operator_member == user_role and operation.status == OPERATION_ACTIVATED %}
+                        <input type="hidden" value="{{ operation.id }}" name="operation_id" id="operation_id">
+                        <input type="hidden" value="{{ order.id }}" name="order_id" id="order_id">
+
+                        {% if operation.need_upload or operation.need_ems %}
+                            <hr size="3"/>
+                        {% endif %}
+
+                        {% if operation.need_upload %}
+                            文件上传：<!--id和name不能随便修改-->
+                            <input id="upload_file_{{ operation.id }}" name="upload_file_{{ operation.id }}" type="file" /></br>
+                        {% endif %}
+
+                        {% if operation.need_ems %}
+                            提交EMS单号：
+                            <input id="ems_number_{{ operation.id }}" name="ems_number_{{ operation.id }}" type="text" value="" maxlength="13"></br>
+
+                        {% endif %}
+                        <input type="submit" value="完成流程" id="" name="operation_submit_{{ operation.id }}" onclick="
+                                if(!validate({% if operation.need_upload %}'upload_file_{{ operation.id }}'{% else %}''{% endif %},{% if operation.need_ems %}'ems_number_{{ operation.id }}'{% else %}''{% endif %})) {return false;}">
+
+                {% else %} <!-- not self, show link  -->
+                    {% if operation.need_upload and operation.upload_file %}
+                        <hr size="3"/>
+                    {% else %}
+                        {% if operation.need_ems and operation.ems_number %}
+                        <hr size="3"/>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if operation.need_upload and operation.upload_file %}
+                        <a href="/transactionorder/{{ operation.transaction_id }}/operation/{{ operation.id }}/attachment/{{ operation.upload_file_name }}">
+                        {% if operation.upload_file_thumbnail %}
+                            <img width="100px" src="/transactionorder/{{ operation.transaction_id }}/operation/{{ operation.id }}/attachment/thumbnail/{{ operation.upload_file_name }}" />
+                        {% else %}
+                            <img width="100px" src="/static/style/img/doc.png" />
+                        {% endif %}
+                        <br/><b>查看附件</b></a>
+                    {% endif %}
+
+                    {% if operation.need_ems and operation.ems_number %}
+                        <br/><a href="#tab_{{ operation.ems_number }}" onclick="get_ems_news('{{ operation.ems_number }}','http://api.ickd.cn/?id=108025&secret=f4aa1d3ac77957a54125808545bc61d9&com=ems&nu={{ operation.ems_number }}&type=json&ord=desc&encode=utf8&ver=2&button=%CC%E1%BD%BB');return false;">
+                            <b>EMS：{{ operation.ems_number }}</b></a>
+
+                        <table unselectable="on" id="tab_{{ operation.ems_number }}" class="tipscontent" style="display: none">
+                            <tr><th>正在查询...</th></tr>
+                        </table>
+
+                    {% endif %}
+                {% endif %}
+            </td>
+        </form>
+            <td>
+            <div style="position:relaitve;">
+                {% if operation.status == OPERATION_UNACTIVATED or operation.status == OPERATION_ACTIVATED %}
+                    <!-- leave blank -->
+                {% elif operation.operator_user != None %}
+                    {{ operation | get_operator_user_link | safe }}
+                {% endif %}
+            </div>
+            </td>
+            <td>
+                <div style="position:relaitve;">
+                    {% if not operation.status == OPERATION_UNACTIVATED %}
+                        {% if not operation.need_confirm %}
+                            无需客服审核
+                        {% elif operation.status == OPERATION_PENDING and user_role == OPERATOR_PLATFORM %}
+                            <a class="button" href="/admin/transaction/transactionoperation/{{ operation.id }}/confirm"><b>审核通过</b></a>
+                        {% elif operation.status == OPERATION_PENDING %}
+                            等待客服审核<br/><a href="111"><b>在线联系客服</b></a>
+                        {% elif operation.status == OPERATION_FINISHED %}
+                            已审核<br/>审核客服:
+                            <a onclick="ShowTips('op{{ operation.id }}_{{ operation.confirm_service.id }}');return false;" title="点击查看客服信息" href="#op{{ operation.id }}_{{ operation.confirm_service.id }}">
+                                <b>{{ operation.confirm_service.name }}</b></a>
+                            <div unselectable="on" id="op{{ operation.id }}_{{ operation.confirm_service.id }}" class="tipscontent" style="display: none">
+                                <b>{{ operation.confirm_service.name }}</b>
+                                <a style="float:right" href="#op{{ operation.id }}_{{ operation.confirm_service.id }}" onclick="ShowTips('op{{ operation.id }}_{{ operation.confirm_service.id }}');return false;">[关闭窗口]</a><br/>
+                                职务：{{ operation.confirm_service.groupname }}<br/>
+                                手机：{{ operation.confirm_service.mobile_number }}<br/>
+                                <a target="_blank" href=""><b>在线联系客服</b></a>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </td>
+            <td>
+                {% if operation.status == OPERATION_PENDING or operation.status == OPERATION_FINISHED %}
+                    {{ operation.finish_time }}
+                {% endif %}
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    </tbody>
+
+</table>
+</fieldset>
+
+
+</div>
+
+<!-- for TransactionOperations -->
+{% block trasnsaction_operations %}
+
+<script language="javascript" type="text/javascript">
+    function validate(file_id,ems_id){
+        if(file_id && !document.getElementById(file_id).value)
+        {
+            alert('请上传附件');
+            document.getElementById(file_id).focus();
+            return false;
+        }else if (ems_id && !document.getElementById(ems_id).value){
+            alert('请填写EMS单号');
+            document.getElementById(ems_id).focus();
+            return false;
+        }
+        return true;
+    }
+
+    function ShowTips(id){
+        if(document.getElementById(id).style.display=='none')
+            document.getElementById(id).style.display='block';
+        else
+            document.getElementById(id).style.display='none';
+        return false;
+    }
+
+    function get_ems_news(ems_id,url){
+        table_id='tab_'+ems_id;
+        if(document.getElementById(table_id).style.display=='none')
+        {
+            if(url!=''){
+                $.ajax({
+                    url: url,
+                    dataType: "jsonp",
+                    jsonp: "callback",
+                    type: 'GET',
+                    timeout: 5000,
+                    success:function(data) {
+                        //alert(123);
+                        var str='<tr><th><a href="#'+table_id+'" onclick="get_ems_news(\''+ems_id+'\',\'\')">[关闭窗口]</a></th><th>EMS订单号：'+ems_id+'</th></tr>';
+                        str+='<tr><th>时间</th><th>记录</th></tr>';
+
+                        for(var item in data.data){
+                            str+='<tr><td>'+data.data[item].time+'</td><td>'+data.data[item].context+'</td></tr>';
+                        }
+                        $('#'+table_id).html(str);
+                     }
+                });
+            }
+            document.getElementById(table_id).style.display='block';
+        }else
+        {
+            document.getElementById(table_id).style.display='none';
+            $('#'+table_id).html('<tr><th>正在查询...</th></tr>');
+        }
+    }
+
+</script>
+
+
+
+{% endblock %}
+
+{% endblock %}
+{% block sidebar %}{% endblock %}
+<!-- member/order_change_form_for_service.html -->

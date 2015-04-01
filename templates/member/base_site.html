@@ -1,0 +1,75 @@
+{% extends "member/base.html" %}
+
+{% block title %}{{ title }} | {{ _('怡智融通贴现服务系统') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><b><a href="/member/main">{{ _('怡智融通贴现服务系统') }}</a></b></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+
+
+{% block sidebar %}
+<div id="content-related">
+    <div class="module" id="recent-actions-module">
+        <h2>导航菜单</h2>
+        <h3>贴现服务</h3>
+            <ul class="actionlist">
+            <br/>
+            {% ifequal user_profile.member_type "enterprise" %}
+            <li class="changelink">
+                    <a href="/transaction/transactionclaim/add/">发起新贴现</a>
+                <br/><br/>
+            </li>
+            {% endifequal %}
+            <li class="changelink">
+                    <a href="/transaction/transactionorder/?status__exact=PROCESSING">进行中的贴现</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    <a href="/transaction/transactionorder/?status__exact=DONE">已完成的贴现</a>
+                <br/><br/>
+            </li>
+            </ul>
+        <h3>会员单位</h3>
+            <ul class="actionlist">
+            <br/>
+            <li class="changelink">
+                    <a href="/member/{{ user_profile.member_type }}/{{ user_profile.member_id }}/">查看单位信息</a>
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                {% if user_profile.is_contactor %}
+                        <a href="/member/{{ user_profile.member_type }}/{{ user_profile.member_id }}/contactor/#inline">修改主联络人</a>
+                    {% else %}
+                        <a href="/member/{{ user_profile.member_type }}/{{ user_profile.member_id }}/contactor/">查看主联络人</a>
+                {% endif %}
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                    {% if user_profile.is_contactor %}
+                        <a href="/member/{{ user_profile.member_type }}/{{ user_profile.member_id }}/operator">设置执行人</a>
+                    {% else %}
+                        <a href="/member/{{ member_type }}operator/{{ user_profile.id }}">修改个人资料</a>
+                {% endif %}
+                <br/><br/>
+            </li>
+            <li class="changelink">
+                <a href="/member/registerinvitationcode/">推荐新会员</a>
+                <br/><br/>
+            </li>
+            </ul>
+        <h3>安全设置</h3>
+
+            <ul class="actionlist">
+                <br/>
+            <li class="changelink">
+                    <a href="/member/password_change/">修改密码</a>
+                <br/><br/>
+            </li>
+            </ul>
+    </div>
+</div>
+{% endblock %}
+
