@@ -4,17 +4,6 @@ import os, time
 from django.http import HttpResponse
 from PIL import Image
 
-# def readFile(fn, buf_size=262144):
-#     f = open(fn, "rb")
-#     while True:
-#         c = f.read(buf_size)
-#         if c:
-#             yield c
-#         else:
-#             break
-#     f.close()
-
-
 # 文件上传
 def handle_uploaded_file(f):
     file_name = ""
@@ -101,9 +90,6 @@ def make_thumb(path, thumb_path, size):
         os.makedirs(thumb_path)
     thumb.save(filename, quality=70)
     return os.path.basename(filename)
-
-
-
 
 
 def send_sms(mobile, message):
