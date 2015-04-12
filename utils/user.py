@@ -6,6 +6,7 @@ from utils.constants import (BANK_CONTACTOR, BANK_OPERATOR, ENTERPRISE_CONTACTOR
     ENTERPRISE_OPERATOR, MEMBER_USER_TYPE, MARKET_MANAGER, ZONE_MARKET, SERVICE_MANAGER,
     ZONE_SERVICE, TOP_MANAGER, TICKET_CONDUCTOR, TICKET_DIRECTOR, ACCOUNTANT, STAFF_TYPE)
 from management.models import Staff
+from utils.constants import StaffType
 
 #================================================= 验证用户组 =================================================
 def group_check(user_id, group_name):
@@ -48,10 +49,7 @@ def get_user_profile(user):
                 return EnterpriseContactor.objects.get(user=user)
             elif groups[0].name == ENTERPRISE_OPERATOR:
                 return EnterpriseOperator.objects.get(user=user)
-            elif groups[0].name in [MARKET_MANAGER, ZONE_MARKET, SERVICE_MANAGER,
-                                    ZONE_SERVICE, TOP_MANAGER, TICKET_CONDUCTOR,
-                                    TICKET_DIRECTOR, ACCOUNTANT]:
-                # todo @zhangnan add staff user here
+            elif groups[0].id in StaffType.values:
                 return Staff.objects.get(user=user)
         else:
             return None
