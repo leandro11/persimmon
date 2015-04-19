@@ -107,13 +107,14 @@ MemberType = Enum({
     'MEMBER_PLATFORM': (3, u'怡智融通'),
 })
 
-# MemberUserType = Enum({
-#     'BANK_CONTACTOR': (1, u'银行会员主联络人'),
-#     'BANK_OPERATOR': (1, u'银行会员执行人'),
-#     'ENTERPRISE_CONTACTOR': (1, u'企业会员主联络人'),
-#     'ENTERPRISE_OPERATOR': (1, u'企业会员执行人'),
-# })
+MemberUserType = Enum({
+    'BANK_CONTACTOR': (1, u'银行会员主联络人'),
+    'BANK_OPERATOR': (1, u'银行会员执行人'),
+    'ENTERPRISE_CONTACTOR': (1, u'企业会员主联络人'),
+    'ENTERPRISE_OPERATOR': (1, u'企业会员执行人'),
+})
 
+MEMBER_USER_TYPE = [(item[1], item[1]) for item in MemberType.choices]
 #=============================================================================================
 
 MEMBER_BANK = u'BANK'
@@ -126,17 +127,17 @@ MEMBER_TYPE = (
     (MEMBER_PLATFORM, '怡智融通'),
 )
 
-BANK_CONTACTOR = u'银行会员主联络人'
-BANK_OPERATOR = u'银行会员执行人'
-ENTERPRISE_CONTACTOR = u'企业会员主联络人'
-ENTERPRISE_OPERATOR = u'企业会员执行人'
+# BANK_CONTACTOR = u'银行会员主联络人'
+# BANK_OPERATOR = u'银行会员执行人'
+# ENTERPRISE_CONTACTOR = u'企业会员主联络人'
+# ENTERPRISE_OPERATOR = u'企业会员执行人'
 
-MEMBER_USER_TYPE = (
-    (BANK_CONTACTOR, BANK_CONTACTOR),
-    (BANK_OPERATOR, BANK_OPERATOR),
-    (ENTERPRISE_CONTACTOR, ENTERPRISE_CONTACTOR),
-    (ENTERPRISE_OPERATOR, ENTERPRISE_OPERATOR),
-)
+# MEMBER_USER_TYPE = (
+#     (BANK_CONTACTOR, BANK_CONTACTOR),
+#     (BANK_OPERATOR, BANK_OPERATOR),
+#     (ENTERPRISE_CONTACTOR, ENTERPRISE_CONTACTOR),
+#     (ENTERPRISE_OPERATOR, ENTERPRISE_OPERATOR),
+# )
 
 # ======================================= 发票状态 =======================================
 INVOICE_UNLODGED = 'UNLODGED'

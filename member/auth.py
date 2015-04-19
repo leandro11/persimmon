@@ -9,7 +9,7 @@ from django.contrib import admin
 from django.contrib.auth import logout as logout_user
 
 from utils.user import get_user_profile
-from utils.constants import BANK_CONTACTOR, BANK_OPERATOR, ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR, MEMBER_USER_TYPE
+from utils.constants import MemberUserType, MEMBER_USER_TYPE
 from utils.constants import StaffType
 
 
@@ -20,14 +20,14 @@ def login(request, template_name='member/login.html', redirect_field_name=REDIRE
           authentication_form=AuthenticationForm, current_app=None, extra_context=None):
     if request.user.is_authenticated():
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
-        if group_name == BANK_CONTACTOR:
+        group_type = None if user_profile is None else user_profile.grouptype
+        if group_type == MemberUserType.BANK_CONTACTOR:
             return HttpResponseRedirect('/member/main')
-        elif group_name == BANK_OPERATOR:
+        elif group_type == MemberUserType.BANK_OPERATOR:
             return HttpResponseRedirect('/member/main')
-        elif group_name == ENTERPRISE_CONTACTOR:
+        elif group_type == MemberUserType.ENTERPRISE_CONTACTOR:
             return HttpResponseRedirect('/member/main')
-        elif group_name == ENTERPRISE_OPERATOR:
+        elif group_type == MemberUserType.ENTERPRISE_OPERATOR:
             return HttpResponseRedirect('/member/main')
         else:
             logout_user(request)

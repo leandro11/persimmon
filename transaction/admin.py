@@ -34,7 +34,7 @@ from utils.constants import MEMBER_TYPE, MEMBER_PLATFORM, MEMBER_ENTERPRISE, MEM
 from utils.constants import StaffType
 from management.sites import site as management_site
 from transaction.models import *
-from utils.constants import BANK_CONTACTOR, BANK_OPERATOR, ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR, MEMBER_USER_TYPE
+from utils.constants import MemberUserType, MEMBER_USER_TYPE
 from utils.user import group_check, get_group, get_user_profile
 
 reload(sys)
@@ -354,11 +354,11 @@ class TransactionClaimAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name in (BANK_CONTACTOR, BANK_OPERATOR):
+        if group_type in (MemberUserType.BANK_CONTACTOR, MemberUserType.BANK_OPERATOR):
             return qs.filter(Q(ticket_bank=user_profile.bank_id) | Q(accept_bank=user_profile.bank_id)).order_by('-id')
-        elif group_name in (ENTERPRISE_OPERATOR, ENTERPRISE_CONTACTOR):
+        elif group_type in (MemberUserType.ENTERPRISE_OPERATOR, MemberUserType.ENTERPRISE_CONTACTOR):
             return qs.filter(Q(receivable_enterprise=user_profile.enterprise_id) | Q(pay_enterprise=user_profile.enterprise_id)).order_by('-id')
         elif isinstance(user_profile, Staff):
             return qs
@@ -615,11 +615,11 @@ class TransactionOrderAdmin(admin.ModelAdmin):
             return super(TransactionOrderAdmin, self).changelist_view(request, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
         self.change_list_template = None
 
         # only for member user
-        if group_name == BANK_CONTACTOR or group_name == BANK_OPERATOR or group_name == ENTERPRISE_CONTACTOR or group_name == ENTERPRISE_OPERATOR:
+        if group_type in MemberUserType.values:
             # self.list_display = ('ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'status')
             self.list_filter = ['status', ]
             self.list_display = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'fee', 'invoice_status', 'ticket_status',
@@ -628,19 +628,19 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
 
             # todo restrict queryset 找出该单位参与的
-        elif group_name == MARKET_MANAGER or group_name == ZONE_MARKET or group_name == SERVICE_MANAGER or group_name == ZONE_SERVICE or group_name == TOP_MANAGER:
+        elif group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_SERVICE, StaffType.SERVICE_MANAGER, StaffType.ZONE_SERVICE, StaffType.TOP_MANAGER):
             # todo @zhangnan for staff
             self.change_list_template = 'management/change_list.html'
 
             self.list_filter = ['status', ]
             self.list_display = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'fee', 'invoice_status', 'ticket_status',
                                  'create_time']
-        elif group_name == ACCOUNTANT:
+        elif group_type == StaffType.ACCOUNTANT:
             self.list_filter = ['invoice_status', ]
             self.list_display = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'amount', 'fee', 'invoice_status', 'ticket_status', 'create_time',
                                  'add_invoice_link']
 
-        elif group_name == TICKET_DIRECTOR or group_name == TICKET_CONDUCTOR:
+        elif group_type in (StaffType.TICKET_DIRECTOR, StaffType.TICKET_CONDUCTOR):
             self.list_filter = ['ticket_status', ]
             self.list_display = ['ticket_number', 'payee_enterprise', 'payer_enterprise', 'ticket_bank_name', 'accept_bank_name', 'amount', 'fee', 'invoice_status',
                                  'ticket_status', 'create_time', 'add_ticket_link']
@@ -733,7 +733,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         # self.form = ModelForm
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         if request.user.is_superuser:
             self.inlines = [TicketFormerHolderAddInline, TransactionOperationEditInline]
@@ -753,29 +753,29 @@ class TransactionOrderAdmin(admin.ModelAdmin):
             self.readonly_fields = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'status',
                                     'create_time', 'finish_time', 'invoice_status', 'ticket_status']
 
-        if group_name == ENTERPRISE_CONTACTOR or group_name == ENTERPRISE_OPERATOR:
+        if group_type in (MemberUserType.ENTERPRISE_CONTACTOR, MemberUserType.ENTERPRISE_OPERATOR):
             self.change_form_template = 'member/order_change_form_for_service.html'
             if user_profile.enterprise.id == order.receivable_enterprise.id:
                 user_role = OPERATOR_RECEIVER
             elif user_profile.enterprise.id == order.pay_enterprise.id:
                 user_role = OPERATOR_PAYER
-        elif group_name == BANK_CONTACTOR or group_name == BANK_OPERATOR:
+        elif group_type in (MemberUserType.BANK_CONTACTOR, MemberUserType.BANK_OPERATOR):
             self.change_form_template = 'member/order_change_form_for_service.html'
             if user_profile.bank.id == order.ticket_bank.id:
                 user_role = OPERATOR_TICKETBANK
             elif user_profile.bank.id == order.accept_bank.id:
                 user_role = OPERATOR_ACCEPTBANK
-        elif group_name == MARKET_MANAGER or group_name == ZONE_MARKET:
+        elif group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_SERVICE):
             self.change_form_template = 'management/order_change_form_for_service.html'
             user_role = OPERATOR_PLATFORM
-        elif group_name == SERVICE_MANAGER or group_name == ZONE_SERVICE:
+        elif group_type in (StaffType.SERVICE_MANAGER, StaffType.ZONE_SERVICE):
             self.change_form_template = 'management/order_change_form_for_service.html'
             user_role = OPERATOR_PLATFORM
-        elif group_name == ACCOUNTANT:
+        elif group_type == StaffType.ACCOUNTANT:
             self.inlines = []
             self.change_form_template = None
             return super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
-        elif group_name == TICKET_DIRECTOR or group_name == TICKET_CONDUCTOR:
+        elif group_type in (StaffType.TICKET_DIRECTOR, StaffType.TICKET_CONDUCTOR):
             self.inlines = []
             self.change_form_template = None
             return super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
@@ -820,11 +820,11 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name == BANK_CONTACTOR or group_name == BANK_OPERATOR:
+        if group_type in (MemberUserType.BANK_CONTACTOR, MemberUserType.BANK_OPERATOR):
             return qs.filter(Q(ticket_bank=user_profile.bank_id) | Q(accept_bank=user_profile.bank_id)).order_by('-id')
-        elif group_name == ENTERPRISE_OPERATOR or group_name == ENTERPRISE_CONTACTOR:
+        elif group_type in (MemberUserType.ENTERPRISE_OPERATOR, MemberUserType.ENTERPRISE_CONTACTOR):
             return qs.filter(Q(receivable_enterprise=user_profile.enterprise_id) | Q(pay_enterprise=user_profile.enterprise_id)).order_by('-id')
         elif isinstance(user_profile, Staff):
             return qs

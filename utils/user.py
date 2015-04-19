@@ -1,10 +1,10 @@
 #coding=utf-8
 
-from member.models import *
 from django.contrib.auth.models import User, Group
-from utils.constants import (BANK_CONTACTOR, BANK_OPERATOR, ENTERPRISE_CONTACTOR,
-    ENTERPRISE_OPERATOR, MEMBER_USER_TYPE, StaffType, STAFF_TYPE)
+
+from member.models import *
 from management.models import Staff
+from utils.constants import (MEMBER_USER_TYPE, StaffType, STAFF_TYPE, MemberUserType)
 from utils.constants import StaffType
 
 #================================================= 验证用户组 =================================================
@@ -40,13 +40,13 @@ def get_user_profile(user):
     groups = user.groups.all()
     try:
         if len(groups) > 0:
-            if groups[0].name == BANK_CONTACTOR:
+            if groups[0].id == MemberUserType.BANK_CONTACTOR:
                 return BankContactor.objects.get(user=user)
-            elif groups[0].name == BANK_OPERATOR:
+            elif groups[0].id == MemberUserType.BANK_OPERATOR:
                 return BankOperator.objects.get(user=user)
-            elif groups[0].name == ENTERPRISE_CONTACTOR:
+            elif groups[0].id == MemberUserType.ENTERPRISE_CONTACTOR:
                 return EnterpriseContactor.objects.get(user=user)
-            elif groups[0].name == ENTERPRISE_OPERATOR:
+            elif groups[0].id == MemberUserType.ENTERPRISE_OPERATOR:
                 return EnterpriseOperator.objects.get(user=user)
             elif groups[0].id in StaffType.values:
                 return Staff.objects.get(user=user)
