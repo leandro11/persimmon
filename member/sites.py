@@ -10,6 +10,7 @@ from member.views import member_main
 import django
 from utils.user import group_check, get_group, get_user_profile
 from utils.constants import *
+from utils.constants import StaffType, MemberUserType
 
 
 class MemberAdminSite(admin.AdminSite):
@@ -71,9 +72,9 @@ class MemberAdminSite(admin.AdminSite):
 
     def has_permission(self, request):
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name == BANK_CONTACTOR or group_name == BANK_OPERATOR or group_name == ENTERPRISE_CONTACTOR or group_name == ENTERPRISE_OPERATOR:
+        if group_type in MemberUserType.values:
             return super(MemberAdminSite, self).has_permission(request)
         else:
             return False

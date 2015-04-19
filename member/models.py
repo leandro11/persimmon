@@ -189,6 +189,13 @@ class EnterpriseContactor(models.Model):
             return None
 
     @property
+    def grouptype(self):
+        if self.user.groups.count() > 0:
+            return self.user.groups.all()[0].id
+        else:
+            return None
+
+    @property
     def is_contactor(self):
         return True
 
@@ -239,6 +246,13 @@ class EnterpriseOperator(models.Model):
     def groupname(self):
         if self.user.groups.count() > 0:
             return self.user.groups.all()[0].name
+        else:
+            return None
+
+    @property
+    def grouptype(self):
+        if self.user.groups.count() > 0:
+            return self.user.groups.all()[0].id
         else:
             return None
 
@@ -340,6 +354,13 @@ class BankContactor(models.Model):
             return None
 
     @property
+    def grouptype(self):
+        if self.user.groups.count() > 0:
+            return self.user.groups.all()[0].id
+        else:
+            return None
+
+    @property
     def is_contactor(self):
         return True
 
@@ -386,6 +407,13 @@ class BankOperator(models.Model):
     def groupname(self):
         if self.user.groups.count() > 0:
             return self.user.groups.all()[0].name
+        else:
+            return None
+
+    @property
+    def grouptype(self):
+        if self.user.groups.count() > 0:
+            return self.user.groups.all()[0].id
         else:
             return None
 

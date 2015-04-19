@@ -64,6 +64,13 @@ class Staff(models.Model):
             return None
 
     @property
+    def grouptype(self):
+        if self.user.groups.count() > 0:
+            return self.user.groups.all()[0].id
+        else:
+            return None
+
+    @property
     def is_contactor(self):
         return False
 

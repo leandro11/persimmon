@@ -1,7 +1,9 @@
 #coding=utf-8
 
+import random, datetime
+import sys
+
 from django.contrib import admin
-from member.models import *
 from django.http import HttpResponse
 from django.conf.urls import patterns
 from django.views.decorators.csrf import csrf_protect
@@ -20,25 +22,25 @@ from django.contrib.admin.utils import (quote, unquote, flatten_fieldsets,
 from django.forms.models import (modelform_factory, modelformset_factory,
                                  inlineformset_factory, BaseInlineFormSet, modelform_defines_fields)
 from django.utils.crypto import get_random_string
-import random, datetime
-import sys
 from django.forms import ModelForm
 from django import forms
 from django.core import validators
 from django.contrib.auth.models import User, Group
-from utils.constants import BANK_CONTACTOR, BANK_OPERATOR, ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR, MEMBER_USER_TYPE, MARKET_MANAGER, ZONE_MARKET, TOP_MANAGER, SERVICE_MANAGER, \
-    ZONE_SERVICE
-from utils.user import group_check, get_group, get_user_profile
-from member.form import *
 from django.http import Http404, HttpResponseRedirect
 from django.contrib.admin.exceptions import DisallowedModelAdminToField
 from django.utils.html import escape, escapejs
 from django.core.urlresolvers import reverse
-from member.sites import site as member_site
-from management.sites import site as management_site
 from django.shortcuts import get_object_or_404, render_to_response
 from django.contrib import messages
 from django.contrib.messages.storage.fallback import FallbackStorage
+
+from member.models import *
+from utils.constants import (MemberUserType, MEMBER_USER_TYPE)
+from utils.constants import StaffType, MemberUserType
+from utils.user import group_check, get_group, get_user_profile
+from member.form import *
+from member.sites import site as member_site
+from management.sites import site as management_site
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -74,13 +76,13 @@ class RegisterInvitationCodeAdmin(admin.ModelAdmin):
         self.form = ModelForm
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         if request.user.is_superuser:
             return super(RegisterInvitationCodeAdmin, self).add_view(request, form_url, extra_context)
-        elif group_name in (MARKET_MANAGER, ZONE_MARKET, TOP_MANAGER):
+        elif group_type in StaffType.values:
             self.add_form_template = 'management/change_form.html'
-        elif group_name in (BANK_OPERATOR, BANK_CONTACTOR, ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR):
+        elif group_type in MemberUserType.values:
             # todo modify invite code add form for contactor
             self.add_form_template = 'member/member_change_form.html'
             extra_context = dict(title=u'推荐新会员注册', )
@@ -93,15 +95,15 @@ class RegisterInvitationCodeAdmin(admin.ModelAdmin):
         #for add_view
         if request.path.find('/add') > 0:
             user_profile = get_user_profile(request.user)
-            group_name = None if user_profile is None else user_profile.groupname
+            group_type = None if user_profile is None else user_profile.grouptype
 
             #若是企业用户添加，则自动填补referee_member_type和referee_member_id字段
-            if group_name == BANK_OPERATOR or group_name == BANK_CONTACTOR:
+            if group_type in (MemberUserType.BANK_OPERATOR, MemberUserType.BANK_CONTACTOR):
                 obj.referee_member_type = BANK_MEMBER
                 obj.referee_member_id = user_profile.bank.id
                 obj.market_manager = user_profile.bank.referee_manager
                 obj.status = CODE_PENDING
-            elif group_name == ENTERPRISE_CONTACTOR or group_name == ENTERPRISE_OPERATOR:
+            elif group_type in (MemberUserType.ENTERPRISE_CONTACTOR, MemberUserType.ENTERPRISE_OPERATOR):
                 obj.referee_member_type = ENTERPRISE_MEMBER
                 obj.referee_member_id = user_profile.enterprise.id
                 obj.market_manager = user_profile.enterprise.referee_manager
@@ -130,18 +132,18 @@ class RegisterInvitationCodeAdmin(admin.ModelAdmin):
         self.readonly_fields = ['code', 'market_manager', 'create_date']
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
         obj = RegisterInvitationCode.objects.get(id=long(object_id))
 
         if request.user.is_superuser:
             self.exclude = []
-        elif group_name in (MARKET_MANAGER, ZONE_MARKET, TOP_MANAGER):
+        elif group_type in StaffType.values:
             self.change_form_template = 'management/change_form.html'
-        elif group_name in (BANK_OPERATOR, BANK_CONTACTOR, ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR):
-            if group_name in (BANK_OPERATOR, BANK_CONTACTOR):
+        elif group_type in MemberUserType.values:
+            if group_type in (MemberUserType.BANK_OPERATOR, MemberUserType.BANK_CONTACTOR):
                 if not obj.referee_member_type == BANK_MEMBER or not obj.referee_member_id == user_profile.bank.id:
                     return Http404
-            elif group_name in (ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR):
+            elif group_type in (MemberUserType.ENTERPRISE_CONTACTOR, MemberUserType.ENTERPRISE_OPERATOR):
                 if not obj.referee_member_type == ENTERPRISE_MEMBER or not obj.referee_member_id == user_profile.enterprise.id:
                     return Http404
 
@@ -170,10 +172,10 @@ class RegisterInvitationCodeAdmin(admin.ModelAdmin):
             return super(RegisterInvitationCodeAdmin, self).changelist_view(request, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
-        if group_name in (MARKET_MANAGER, ZONE_MARKET, TOP_MANAGER):
+        group_type = None if user_profile is None else user_profile.grouptype
+        if group_type in StaffType.values:
             self.change_list_template = 'management/change_list.html'
-        elif group_name in (BANK_OPERATOR, BANK_CONTACTOR, ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR):
+        elif group_type in MemberUserType.values:
             self.change_list_template = 'member/change_list.html'
             self.list_filter = ()
         extra_context = dict(title=u'会员推荐记录', )
@@ -184,7 +186,7 @@ class RegisterInvitationCodeAdmin(admin.ModelAdmin):
         self.exclude = ['referee_member_type', 'referee_member_id']
         self.readonly_fields = ['status', 'code', 'market_manager', 'create_date']
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         obj = RegisterInvitationCode.objects.get(id=long(object_id))
         if obj.status == CODE_USED:
@@ -199,7 +201,7 @@ class RegisterInvitationCodeAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             pass
             #return super(RegisterInvitationCodeAdmin, self).change_view(request, object_id, form_url, extra_context)
-        elif group_name in (MARKET_MANAGER, ZONE_MARKET, TOP_MANAGER):
+        elif group_type in StaffType.values:
             self.change_form_template = 'management/change_form.html'
         else:
             return Http404
@@ -211,16 +213,16 @@ class RegisterInvitationCodeAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         # 限制只能看见自己单位的邀请记录
-        if group_name in (MARKET_MANAGER, ZONE_MARKET):
+        if group_type in StaffType.values:
             return qs.filter(market_manager_id=user_profile.id)
-        elif group_name in (BANK_CONTACTOR, BANK_OPERATOR):
+        elif group_type in (MemberUserType.BANK_OPERATOR, MemberUserType.BANK_OPERATOR):
             return qs.filter(referee_member_type=BANK_MEMBER, referee_member_id=user_profile.bank_id)
-        elif group_name in (ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR):
+        elif group_type in (MemberUserType.ENTERPRISE_CONTACTOR, MemberUserType.ENTERPRISE_OPERATOR):
             return qs.filter(referee_member_type=ENTERPRISE_MEMBER, referee_member_id=user_profile.enterprise_id)
-        elif group_name == TOP_MANAGER:
+        elif group_type == MemberUserType.TOP_MANAGER:
             return qs
         else:
             raise PermissionDenied
@@ -266,12 +268,12 @@ class BankAdmin(admin.ModelAdmin):
 
         self.change_form_template = 'member/member_change_form.html'
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         if not hasattr(user_profile, 'bank') or user_profile.bank_id != long(object_id):
             return HttpResponse('error: no privilege')  # 该联络人不属于该银行
 
-        if group_name == BANK_CONTACTOR:
+        if group_type == MemberUserType.BANK_CONTACTOR:
             self.exclude = ['strategic_agreements', 'level', 'execution_agreements', 'invite_code', 'expired_date', 'province', 'city', 'address', 'zipcode', 'fax_number',
                             'status', 'reference_count', 'referee_manager', 'service_manager', 'name']
             self.readonly_fields = ['short_name']
@@ -285,7 +287,7 @@ class BankAdmin(admin.ModelAdmin):
                 pass
             else:
                 self.inlines = [BankOperatorListInline]
-        elif group_name == BANK_OPERATOR:
+        elif group_type == MemberUserType.BANK_OPERATOR:
             self.exclude = ['strategic_agreements', 'level', 'execution_agreements', 'user', 'invite_code', 'groupname', 'province', 'city', 'address', 'zipcode', 'fax_number',
                             'status', 'reference_count', 'referee_manager', 'service_manager', 'name']
             self.readonly_fields = ['short_name']
@@ -409,17 +411,17 @@ class BankAdmin(admin.ModelAdmin):
         self.change_form_template = 'member/member_change_form.html'
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         if not hasattr(user_profile, 'bank') or user_profile.bank_id != long(object_id):
             return HttpResponse('error: no privilege')  # 该联络人不属于该银行
 
-        if group_name == BANK_CONTACTOR:
+        if group_type == MemberUserType.BANK_CONTACTOR:
             self.exclude = ['strategic_agreements', 'execution_agreements', 'invite_code', 'expired_date', 'province', 'city', 'address', 'zipcode', 'fax_number', 'status',
                             'reference_count']
             self.readonly_fields = ['name', 'short_name']
             self.inlines = [BankContactorInline]
-        elif group_name == BANK_OPERATOR:
+        elif group_type == MemberUserType.BANK_OPERATOR:
             self.exclude = ['strategic_agreements', 'execution_agreements', 'invite_code', 'province', 'city', 'address', 'zipcode', 'fax_number', 'status', 'expired_date',
                             'reference_count']
             self.readonly_fields = ['name', 'short_name']
@@ -445,11 +447,11 @@ class BankAdmin(admin.ModelAdmin):
         self.change_form_template = None
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         if request.user.is_superuser:
             pass
-        elif group_name == BANK_CONTACTOR or group_name == BANK_OPERATOR:
+        elif group_type in (MemberUserType.BANK_CONTACTOR, MemberUserType.BANK_OPERATOR):
             self.change_form_template = 'member/bank_agreement_form.html'
             # self.inlines = [BankAttachmentInline]
             bank = Bank.objects.get(pk=object_id)
@@ -462,7 +464,7 @@ class BankAdmin(admin.ModelAdmin):
                                  bank=bank,
                                  strategic_agreements=strategic_agreements,
                                  execution_agreements=execution_agreements,
-                                 is_contactor=group_name == BANK_CONTACTOR,
+                                 is_contactor=group_type== MemberUserType.BANK_CONTACTOR,
                                  user_profile=user_profile,
             )
         return super(BankAdmin, self).change_view(request, object_id, form_url, extra_context)
@@ -485,18 +487,18 @@ class BankAdmin(admin.ModelAdmin):
             return super(BankAdmin, self).change_view(request, object_id, form_url, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name in (ZONE_MARKET, MARKET_MANAGER, ZONE_SERVICE, SERVICE_MANAGER, TOP_MANAGER):
+        if group_type in StaffType.values:
             self.change_form_template = 'management/confirm_bank_form.html'
             self.inlines = [BankContactorInline]
             self.readonly_fields = ['level', 'status', 'invite_code', 'expired_date', 'reference_count', 'referee_manager']
-        elif group_name == BANK_CONTACTOR:
+        elif group_type == MemberUserType.BANK_CONTACTOR:
             self.change_form_template = 'member/bank_display_form.html'
             self.inlines = [BankContactorInline]
             self.exclude = ['expired_date', 'invite_code', 'status', 'referee_manager']
             self.readonly_fields = ['level', 'reference_count', 'service_manager']
-        elif group_name == BANK_OPERATOR:
+        elif group_type == MemberUserType.BANK_OPERATOR:
             self.change_form_template = 'member/bank_display_form.html'
             self.inlines = [BankContactorReadonlyInline]
             self.exclude = ['expired_date', 'invite_code', 'status', 'strategic_agreements', 'execution_agreements', 'referee_manager']
@@ -513,7 +515,7 @@ class BankAdmin(admin.ModelAdmin):
                              execution_agreements=execution_agreements,
                              hide_inline=False,
                              bank_id=object_id,
-                             is_contactor=group_name == BANK_CONTACTOR,
+                             is_contactor= group_type == MemberUserType.BANK_CONTACTOR,
                              user_profile=user_profile,
                              bank=bank,
         )
@@ -633,7 +635,7 @@ class BankAdmin(admin.ModelAdmin):
                 # 创建主联络人django user
                 user = User.objects.create_user(username=contactor.username, password=password, email=contactor.email)
                 user.is_active = False
-                group = Group.objects.get(name=BANK_CONTACTOR)
+                group = Group.objects.get(id=MemberUserType.BANK_CONTACTOR)
                 user.groups.add(group)
                 user.save()
 
@@ -696,7 +698,7 @@ class BankAdmin(admin.ModelAdmin):
     def confirm_view(self, request, object_id, form_url='', extra_context=None):
         # 仅有超级管理员和市场经理可以进行确认会员注册
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         bank = Bank.objects.get(pk=object_id)
         if not bank.status == MEMBER_PENDING:
@@ -708,7 +710,7 @@ class BankAdmin(admin.ModelAdmin):
 
         if request.user.is_superuser:
             pass
-        elif group_name in (ZONE_MARKET, MARKET_MANAGER, TOP_MANAGER):
+        elif group_type in StaffType.values:
             pass
         else:
             return Http404
@@ -727,7 +729,7 @@ class BankAdmin(admin.ModelAdmin):
                              execution_agreements=execution_agreements,
                              hide_inline=False,
                              bank_id=object_id,
-                             is_contactor=group_name == BANK_CONTACTOR,
+                             is_contactor= group_type == StaffType.BANK_CONTACTOR,
                              user_profile=user_profile,
                              bank=bank,
         )
@@ -806,9 +808,9 @@ class BankAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.id
 
-        if group_name == BANK_CONTACTOR or group_name == BANK_OPERATOR:
+        if group_type in (MemberUserType.BANK_CONTACTOR, MemberUserType.BANK_OPERATOR):
             return qs.filter(id=user_profile.bank_id)
         elif isinstance(user_profile, Staff):
             return qs
@@ -1053,19 +1055,19 @@ class EnterpriseAdmin(admin.ModelAdmin):
             return super(EnterpriseAdmin, self).change_view(request, object_id, form_url, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name in (ZONE_MARKET, MARKET_MANAGER, ZONE_SERVICE, SERVICE_MANAGER, TOP_MANAGER):
+        if group_type in StaffType.values:
             self.inlines = [EnterpriseContactorInline, EnterpriseOperatorConfirmInline]
             self.readonly_fields = ['level', 'status', 'reference_count', 'referee_manager', 'invite_code']
             self.change_form_template = 'management/confirm_enterprise_form.html'
-        elif group_name == ENTERPRISE_CONTACTOR:
+        elif group_type == MemberUserType.ENTERPRISE_CONTACTOR:
             # todo replace with change_form.html
             self.change_form_template = 'member/enterprise_display_form.html'
             self.inlines = [EnterpriseContactorInline]
             self.exclude = ['expired_date', 'invite_code', 'status', 'referee_manager']
             self.readonly_fields = ['level', 'reference_count', 'service_manager']
-        elif group_name == ENTERPRISE_OPERATOR:
+        elif group_type == MemberUserType.ENTERPRISE_OPERATOR:
             # todo replace with change_form.html
             self.change_form_template = 'member/enterprise_display_form.html'
             self.inlines = [EnterpriseContactorReadonlyInline]
@@ -1276,7 +1278,7 @@ class EnterpriseAdmin(admin.ModelAdmin):
     def confirm_view(self, request, object_id, form_url='', extra_context=None):
         # 仅有超级管理员和市场经理可以进行确认会员注册
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         enterprise = Enterprise.objects.get(pk=object_id)
         if not enterprise.status == MEMBER_PENDING:
@@ -1288,7 +1290,7 @@ class EnterpriseAdmin(admin.ModelAdmin):
 
         if request.user.is_superuser:
             pass
-        elif group_name in (ZONE_MARKET, MARKET_MANAGER, TOP_MANAGER):
+        elif group_type in StaffType.values:
             pass
         else:
             return Http404
@@ -1309,7 +1311,7 @@ class EnterpriseAdmin(admin.ModelAdmin):
                              hide_inline=False,
                              enterprise_id=object_id,
                              enterprise=enterprise,
-                             is_contactor=group_name == ENTERPRISE_CONTACTOR,
+                             is_contactor= (group_type == MemberUserType.ENTERPRISE_CONTACTOR),
                              user_profile=user_profile,
         )
         self.change_form_template = 'management/confirm_enterprise_form.html'
@@ -1411,10 +1413,10 @@ class BankOperatorAdmin(admin.ModelAdmin):
             return super(BankOperatorAdmin, self).changelist_view(request, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         # 只允许工作人员用户查看changelist
-        if isinstance(user_profile, Staff) or group_name == BANK_CONTACTOR:
+        if isinstance(user_profile, Staff) or group_type == MemberUserType.BANK_CONTACTOR:
             pass
         else:
             return Http404
@@ -1433,21 +1435,21 @@ class BankOperatorAdmin(admin.ModelAdmin):
             return super(BankOperatorAdmin, self).change_view(request, object_id, form_url, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name == BANK_CONTACTOR:
+        if group_type == MemberUserType.BANK_CONTACTOR:
             obj = BankOperator.objects.get(id=long(object_id))
             if not user_profile.bank_id == obj.bank_id:
                 raise PermissionDenied
             self.exclude = ['user', 'groupname', 'last_login', 'modify_date']
             self.readonly_fields = ['name', 'username', 'bank', 'identity_card', 'mobile_number', 'telephone', 'email', 'position']
-        elif group_name == BANK_OPERATOR:
+        elif group_type == MemberUserType.BANK_OPERATOR:
             # 不允许查看其它执行人
             if not user_profile.id == long(object_id):
                 raise PermissionDenied
             self.exclude = ['user', 'groupname', 'last_login', 'modify_date']
             self.readonly_fields = ['bank', 'username']
-        elif group_name == ZONE_SERVICE or group_name == SERVICE_MANAGER:
+        elif group_type in (StaffType.ZONE_SERVICE, StaffType.SERVICE_MANAGER):
             # todo 客服查看执行人
             pass
         else:
@@ -1462,11 +1464,11 @@ class BankOperatorAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name == BANK_CONTACTOR:
+        if group_type == MemberUserType.BANK_CONTACTOR:
             return qs.filter(bank_id=user_profile.bank_id)
-        elif group_name == BANK_OPERATOR:
+        elif group_type == MemberUserType.BANK_OPERATOR:
             return qs.filter(id=user_profile.id)
         elif isinstance(user_profile, Staff):
             return qs
@@ -1510,22 +1512,22 @@ class BankContactorAdmin(admin.ModelAdmin):
             return super(BankContactorAdmin, self).change_view(request, object_id, form_url, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name == BANK_CONTACTOR:
+        if group_type == MemberUserType.BANK_CONTACTOR:
             # 不允许查看其它主联络人
             if not user_profile.id == long(object_id):
                 return PermissionDenied
             self.exclude = ['user', 'groupname', 'last_login', 'modify_date']
             self.readonly_fields = ['bank', 'username']
-        elif group_name == BANK_OPERATOR:
+        elif group_type == MemberUserType.BANK_OPERATOR:
             obj = BankContactor.objects.get(id=long(object_id))
             if not user_profile.bank_id == obj.bank_id:
                 raise PermissionDenied
             # 执行人只能查看主联络人的信息
             self.exclude = ['user', 'groupname', 'last_login', 'modify_date']
             self.readonly_fields = ['name', 'username', 'bank', 'identity_card', 'mobile_number', 'telephone', 'email', 'position']
-        elif group_name == ZONE_SERVICE or group_name == SERVICE_MANAGER:
+        elif group_name in (ZONE_SERVICE, SERVICE_MANAGER):
             # todo 客服查看执行人
             pass
         else:
@@ -1541,11 +1543,11 @@ class BankContactorAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name == BANK_CONTACTOR:
+        if group_type == MemberUserType.BANK_CONTACTOR:
             return qs.filter(id=user_profile.id)
-        elif group_name == BANK_OPERATOR:
+        elif group_type == MemberUserType.BANK_OPERATOR:
             return qs.filter(bank_id=user_profile.bank_id)
         elif isinstance(user_profile, Staff):
             return qs
@@ -1567,7 +1569,7 @@ class EnterpriseContactorAdmin(admin.ModelAdmin):
             return super(EnterpriseContactorAdmin, self).changelist_view(request, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         # 只允许工作人员用户查看changelist
         if isinstance(user_profile, Staff):
@@ -1589,22 +1591,22 @@ class EnterpriseContactorAdmin(admin.ModelAdmin):
             return super(EnterpriseContactorAdmin, self).change_view(request, object_id, form_url, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name == ENTERPRISE_CONTACTOR:
+        if group_type == MemberUserType.ENTERPRISE_CONTACTOR:
             # 不允许查看其它会员单位的主联络人
             if not user_profile.id == long(object_id):
                 raise PermissionDenied
             self.exclude = ['user', 'groupname', 'last_login', 'modify_date']
             self.readonly_fields = ['enterprise', 'username']
-        elif group_name == ENTERPRISE_OPERATOR:
+        elif group_type == MemberUserType.ENTERPRISE_OPERATOR:
             # 不允许查看其它会员单位的执行人
             obj = EnterpriseOperator.objects.get(id=long(object_id))
             if not user_profile.enterprise_id == obj.enterprise_id:
                 raise PermissionDenied
             self.exclude = ['user', 'groupname', 'last_login', 'modify_date']
             self.readonly_fields = ['enterprise', 'username']['name', 'username', 'enterprise', 'identity_card', 'mobile_number', 'telephone', 'email', 'position']
-        elif group_name == ZONE_SERVICE or group_name == SERVICE_MANAGER:
+        elif group_name in (MemberUserType.ZONE_SERVICE, MemberUserType.SERVICE_MANAGER):
             # todo 客服查看执行人
             pass
         else:
@@ -1827,9 +1829,9 @@ class BankAttachmentAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name == BANK_CONTACTOR or group_name == BANK_OPERATOR:
+        if group_type in (MemberUserType.BANK_CONTACTOR, MemberUserType.BANK_OPERATOR):
             return qs.filter(bank_id=user_profile.bank_id)
         elif isinstance(user_profile, Staff):
             return qs
