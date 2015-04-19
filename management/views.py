@@ -19,9 +19,8 @@ from transaction.models import (TransactionClaim, TransactionOrder, TRANSACTION_
 from member.models import (Enterprise, Bank, RegisterInvitationCode, MEMBER_ENABLED,
     MEMBER_PENDING, MEMBER_DISABLED, MEMBER_EXPIRED, CODE_ACTIVATED)
 from utils.user import get_user_profile
-from utils.constants import (MARKET_MANAGER, ZONE_MARKET, SERVICE_MANAGER,
-    ZONE_SERVICE, TOP_MANAGER, TICKET_CONDUCTOR, TICKET_DIRECTOR, ACCOUNTANT,
-    TICKET_RECEIVED_PENDING, TICKET_RECEIVED, TICKET_VERIFIED_PENDING, TICKET_VERIFIED,
+from utils.constants import (
+    StaffType, TICKET_RECEIVED_PENDING, TICKET_RECEIVED, TICKET_VERIFIED_PENDING, TICKET_VERIFIED,
     TICKET_CHECKIN_PENDING, TICKET_CHECKIN, TICKET_CHECKOUT_PENDING, TICKET_CHECKOUT,
     INVOICE_LODGED, INVOICE_FINISHED, INVOICE_UNLODGED, TICKET_UNRECEIVED)
 from ticket.models import TransactionTicket, Invoice
@@ -63,22 +62,22 @@ def main_view(request):
         return redirect_to_login('/management/login')
 
     user_profile = get_user_profile(request.user)
-    group_name = None if user_profile is None else user_profile.groupname
-    if group_name == MARKET_MANAGER:  # 市场部总经理
+    group_type = None if user_profile is None else user_profile.grouptype
+    if group_type == StaffType.MARKET_MANAGER:  # 市场部总经理
         return zone_market_dashboard(request, user_profile)
-    elif group_name == ZONE_MARKET:  # 区域市场经理
+    elif group_type == StaffType.ZONE_MARKET:  # 区域市场经理
         return zone_market_dashboard(request, user_profile)
-    elif group_name == SERVICE_MANAGER:  # 客服部总经理
+    elif group_type == StaffType.SERVICE_MANAGER:  # 客服部总经理
         return zone_service_dashboard(request, user_profile)
-    elif group_name == ZONE_SERVICE:  # 区域客服
+    elif group_type == StaffType.ZONE_SERVICE:  # 区域客服
         return zone_service_dashboard(request, user_profile)
-    elif group_name == TICKET_DIRECTOR:  # 票据主管
+    elif group_type == StaffType.TICKET_DIRECTOR:  # 票据主管
         return ticket_director_dashboard(request, user_profile)
-    elif group_name == TICKET_CONDUCTOR:  # 核票员
+    elif group_type == StaffType.TICKET_CONDUCTOR:  # 核票员
         return ticket_conductor_dashboard(request, user_profile)
-    elif group_name == ACCOUNTANT:  # 会计
+    elif group_type == StaffType.ACCOUNTANT:  # 会计
         return accountant_dashboard(request, user_profile)
-    elif group_name == TOP_MANAGER:  # 总经理
+    elif group_type == StaffType.TOP_MANAGER:  # 总经理
         pass
     else:
         # /management/login的接口只工作人员登陆

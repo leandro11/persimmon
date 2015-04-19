@@ -97,7 +97,24 @@ StaffType = Enum({
     'TOP_MANAGER': (12, u"总经理"),
 })
 
+STAFF_TYPE = [(item[1], item[1]) for item in StaffType.choices]
+
 #================================================ 用户角色名称 =============================================
+
+MemberType = Enum({
+    'MEMBER_BANK': (1, u'银行会员'),
+    'MEMBER_ENTERPRISE': (2, u'企业会员'),
+    'MEMBER_PLATFORM': (3, u'怡智融通'),
+})
+
+# MemberUserType = Enum({
+#     'BANK_CONTACTOR': (1, u'银行会员主联络人'),
+#     'BANK_OPERATOR': (1, u'银行会员执行人'),
+#     'ENTERPRISE_CONTACTOR': (1, u'企业会员主联络人'),
+#     'ENTERPRISE_OPERATOR': (1, u'企业会员执行人'),
+# })
+
+#=============================================================================================
 
 MEMBER_BANK = u'BANK'
 MEMBER_ENTERPRISE = u'ENTERPRISE'
@@ -119,26 +136,6 @@ MEMBER_USER_TYPE = (
     (BANK_OPERATOR, BANK_OPERATOR),
     (ENTERPRISE_CONTACTOR, ENTERPRISE_CONTACTOR),
     (ENTERPRISE_OPERATOR, ENTERPRISE_OPERATOR),
-)
-# todo @zhangnan django的group里必须新建以这些名称作为name的group记录
-MARKET_MANAGER = u'市场部总经理'
-ZONE_MARKET = u'区域市场经理'
-SERVICE_MANAGER = u'客服部总经理'
-ZONE_SERVICE = u'区域客服'
-TOP_MANAGER = u'总经理'    # is_superuser == True
-TICKET_CONDUCTOR = u'核票员'
-TICKET_DIRECTOR = u'票据主管'
-ACCOUNTANT = u'会计'
-
-STAFF_TYPE = (
-    (MARKET_MANAGER, MARKET_MANAGER),
-    (ZONE_MARKET, ZONE_MARKET),
-    (SERVICE_MANAGER, SERVICE_MANAGER),
-    (ZONE_SERVICE, ZONE_SERVICE),
-    (TOP_MANAGER, TOP_MANAGER),
-    (TICKET_CONDUCTOR, TICKET_CONDUCTOR),
-    (TICKET_DIRECTOR, TICKET_DIRECTOR),
-    (ACCOUNTANT, ACCOUNTANT),
 )
 
 # ======================================= 发票状态 =======================================

@@ -1,7 +1,9 @@
 #coding=utf-8
 
+import random, datetime
+import sys
+
 from django.contrib import admin
-from member.models import *
 from django.http import HttpResponse
 from django.conf.urls import patterns
 from django.views.decorators.csrf import csrf_protect
@@ -20,25 +22,26 @@ from django.contrib.admin.utils import (quote, unquote, flatten_fieldsets,
 from django.forms.models import (modelform_factory, modelformset_factory,
                                  inlineformset_factory, BaseInlineFormSet, modelform_defines_fields)
 from django.utils.crypto import get_random_string
-import random, datetime
-import sys
 from django.forms import ModelForm
 from django import forms
 from django.core import validators
 from django.contrib.auth.models import User, Group
-from utils.constants import BANK_CONTACTOR, BANK_OPERATOR, ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR, MEMBER_USER_TYPE, MARKET_MANAGER, ZONE_MARKET, TOP_MANAGER, SERVICE_MANAGER, \
-    ZONE_SERVICE
-from utils.user import group_check, get_group, get_user_profile
-from member.form import *
 from django.http import Http404, HttpResponseRedirect
 from django.contrib.admin.exceptions import DisallowedModelAdminToField
 from django.utils.html import escape, escapejs
 from django.core.urlresolvers import reverse
-from member.sites import site as member_site
-from management.sites import site as management_site
 from django.shortcuts import get_object_or_404, render_to_response
 from django.contrib import messages
 from django.contrib.messages.storage.fallback import FallbackStorage
+
+from member.models import *
+from utils.constants import (BANK_CONTACTOR, BANK_OPERATOR, ENTERPRISE_CONTACTOR,
+    ENTERPRISE_OPERATOR, MEMBER_USER_TYPE)
+from utils.constants import StaffType
+from utils.user import group_check, get_group, get_user_profile
+from member.form import *
+from member.sites import site as member_site
+from management.sites import site as management_site
 
 reload(sys)
 sys.setdefaultencoding('utf-8')

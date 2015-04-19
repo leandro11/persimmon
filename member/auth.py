@@ -4,11 +4,14 @@ import django
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.forms import AuthenticationForm
-from utils.user import get_user_profile
-from utils.constants import BANK_CONTACTOR, BANK_OPERATOR, ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR, MEMBER_USER_TYPE, MARKET_MANAGER, ZONE_MARKET, SERVICE_MANAGER, ZONE_SERVICE
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.contrib import admin
 from django.contrib.auth import logout as logout_user
+
+from utils.user import get_user_profile
+from utils.constants import BANK_CONTACTOR, BANK_OPERATOR, ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR, MEMBER_USER_TYPE
+from utils.constants import StaffType
+
 
 # ================================================ LOGIN & AUTH ======================================
 

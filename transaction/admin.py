@@ -1,19 +1,15 @@
 #coding=utf-8
+
+import sys, datetime
+
 from django.contrib import admin
-from transaction.models import *
 from django.contrib.auth.models import User, Group
-from utils.constants import BANK_CONTACTOR, BANK_OPERATOR, ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR, MEMBER_USER_TYPE, MARKET_MANAGER, ZONE_MARKET, SERVICE_MANAGER, ZONE_SERVICE
-from utils.user import group_check, get_group, get_user_profile
 from django.shortcuts import get_object_or_404, render_to_response, render, redirect
 from django.http import HttpResponse
 from django.conf.urls import patterns
 from django.views.decorators.csrf import csrf_protect
 from django.utils.decorators import method_decorator
 from django.db import transaction
-from transaction.form import *
-from utils.constants import MARKET_MANAGER, ZONE_MARKET, SERVICE_MANAGER, ZONE_SERVICE, TOP_MANAGER, TICKET_CONDUCTOR, TICKET_DIRECTOR, ACCOUNTANT, STAFF_TYPE
-from utils.constants import MEMBER_TYPE, MEMBER_PLATFORM, MEMBER_ENTERPRISE, MEMBER_BANK
-# add & change view
 from django.contrib.admin.exceptions import DisallowedModelAdminToField
 from django.core.exceptions import (PermissionDenied, ValidationError, FieldError, ImproperlyConfigured)
 from django.http import Http404, HttpResponseRedirect
@@ -26,14 +22,20 @@ from django.contrib.admin import widgets, helpers
 from django.utils.translation import ugettext as _
 from django.db import transaction
 from django.contrib.auth import get_permission_codename
-from member.sites import site as member_site
-from ticket.form import *
-from django.http import Http404, HttpResponseNotFound
 from django.template.response import SimpleTemplateResponse, TemplateResponse
 from django.contrib import messages
 from django.contrib.messages.storage.fallback import FallbackStorage
-import sys, datetime
+from django.http import Http404, HttpResponseNotFound
+
+from member.sites import site as member_site
+from ticket.form import *
+from transaction.form import *
+from utils.constants import MEMBER_TYPE, MEMBER_PLATFORM, MEMBER_ENTERPRISE, MEMBER_BANK
+from utils.constants import StaffType
 from management.sites import site as management_site
+from transaction.models import *
+from utils.constants import BANK_CONTACTOR, BANK_OPERATOR, ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR, MEMBER_USER_TYPE
+from utils.user import group_check, get_group, get_user_profile
 
 reload(sys)
 sys.setdefaultencoding('utf-8')

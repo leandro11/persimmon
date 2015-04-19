@@ -3,8 +3,7 @@
 from member.models import *
 from django.contrib.auth.models import User, Group
 from utils.constants import (BANK_CONTACTOR, BANK_OPERATOR, ENTERPRISE_CONTACTOR,
-    ENTERPRISE_OPERATOR, MEMBER_USER_TYPE, MARKET_MANAGER, ZONE_MARKET, SERVICE_MANAGER,
-    ZONE_SERVICE, TOP_MANAGER, TICKET_CONDUCTOR, TICKET_DIRECTOR, ACCOUNTANT, STAFF_TYPE)
+    ENTERPRISE_OPERATOR, MEMBER_USER_TYPE, StaffType, STAFF_TYPE)
 from management.models import Staff
 from utils.constants import StaffType
 
