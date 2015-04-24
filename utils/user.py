@@ -34,8 +34,6 @@ def get_group(user):
 def get_user_profile(user):
     if isinstance(user, int):
         user = User.objects.get(id=user)
-    # if not user.is_authenticated():
-    #     return HttpResponseRedirect('/member/login')
 
     groups = user.groups.all()
     try:
