@@ -24,7 +24,7 @@ from utils.constants import (
     TICKET_CHECKIN_PENDING, TICKET_CHECKIN, TICKET_CHECKOUT_PENDING, TICKET_CHECKOUT,
     INVOICE_LODGED, INVOICE_FINISHED, INVOICE_UNLODGED, TICKET_UNRECEIVED)
 from ticket.models import TransactionTicket, Invoice
-from staff_view import BaseStaffView
+from management.staff_view import BaseStaffView
 
 
 csrf_protect_m = method_decorator(csrf_protect)
