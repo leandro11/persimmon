@@ -15,7 +15,6 @@ from utils.constants import (
     INVOICE_LODGED, INVOICE_FINISHED, INVOICE_UNLODGED, TICKET_UNRECEIVED)
 
 
-
 class BaseStaffView(object):
     """
     Base Staff View
