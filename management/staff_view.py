@@ -1,12 +1,19 @@
 #coding=utf-8
 
 from django.template.response import TemplateResponse
+from django.db.models import Q
 
 from transaction.models import (TransactionClaim, TransactionOrder, TRANSACTION_PROCESSING,
     TRANSACTION_DONE, TRANSACTION_ABORT, CLAIM_PENDING, CLAIM_PASSED, CLAIM_ABORT)
 from member.models import (Enterprise, Bank, RegisterInvitationCode, MEMBER_ENABLED,
     MEMBER_PENDING, MEMBER_DISABLED, MEMBER_EXPIRED, CODE_ACTIVATED)
 from utils.constants import StaffType
+from ticket.models import TransactionTicket, Invoice
+from utils.constants import (
+    StaffType, TICKET_RECEIVED_PENDING, TICKET_RECEIVED, TICKET_VERIFIED_PENDING, TICKET_VERIFIED,
+    TICKET_CHECKIN_PENDING, TICKET_CHECKIN, TICKET_CHECKOUT_PENDING, TICKET_CHECKOUT,
+    INVOICE_LODGED, INVOICE_FINISHED, INVOICE_UNLODGED, TICKET_UNRECEIVED)
+
 
 
 class BaseStaffView(object):

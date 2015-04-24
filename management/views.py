@@ -10,7 +10,6 @@ from django.views.decorators.csrf import csrf_protect
 from django.template import RequestContext
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.http import HttpResponse, HttpResponseRedirect
-from django.db.models import Q
 
 from management.models import Staff
 from management.auth import login, logout, logout_then_login, redirect_to_login
@@ -19,11 +18,6 @@ from transaction.models import (TransactionClaim, TransactionOrder, TRANSACTION_
 from member.models import (Enterprise, Bank, RegisterInvitationCode, MEMBER_ENABLED,
     MEMBER_PENDING, MEMBER_DISABLED, MEMBER_EXPIRED, CODE_ACTIVATED)
 from utils.user import get_user_profile
-from utils.constants import (
-    StaffType, TICKET_RECEIVED_PENDING, TICKET_RECEIVED, TICKET_VERIFIED_PENDING, TICKET_VERIFIED,
-    TICKET_CHECKIN_PENDING, TICKET_CHECKIN, TICKET_CHECKOUT_PENDING, TICKET_CHECKOUT,
-    INVOICE_LODGED, INVOICE_FINISHED, INVOICE_UNLODGED, TICKET_UNRECEIVED)
-from ticket.models import TransactionTicket, Invoice
 from management.staff_view import BaseStaffView
 
 
