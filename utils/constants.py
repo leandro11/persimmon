@@ -109,9 +109,9 @@ MemberType = Enum({
 
 MemberUserType = Enum({
     'BANK_CONTACTOR': (1, u'银行会员主联络人'),
-    'BANK_OPERATOR': (1, u'银行会员执行人'),
-    'ENTERPRISE_CONTACTOR': (1, u'企业会员主联络人'),
-    'ENTERPRISE_OPERATOR': (1, u'企业会员执行人'),
+    'BANK_OPERATOR': (2, u'银行会员执行人'),
+    'ENTERPRISE_CONTACTOR': (3, u'企业会员主联络人'),
+    'ENTERPRISE_OPERATOR': (4, u'企业会员执行人'),
 })
 
 MEMBER_USER_TYPE = [(item[1], item[1]) for item in MemberType.choices]
