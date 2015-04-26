@@ -16,7 +16,7 @@ def login(request, template_name='management/login.html', redirect_field_name=RE
           authentication_form=AuthenticationForm, current_app=None, extra_context=None):
     if request.user.is_authenticated():
         user_profile = get_user_profile(request.user)
-        if user_profile.grouptype in StaffType.values():
+        if user_profile.grouptype in StaffType.values:
             return HttpResponseRedirect('/management/main')
         else:
             logout_user(request)
