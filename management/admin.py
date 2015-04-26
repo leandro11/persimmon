@@ -117,7 +117,7 @@ class StaffAdmin(admin.ModelAdmin):
             user = User.objects.create_user(username=username,
                                             password=password,
                                             email=obj.email)
-            user.is_staff = True
+            user.is_active = True
             user.is_staff = True
             user.groups.clear()
             group = Group.objects.get(name=obj.position)
