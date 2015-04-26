@@ -131,27 +131,20 @@ class StaffAdmin(admin.ModelAdmin):
     @transaction.atomic
     def register_view(self, request, form_url='', extra_context=None):
         request.user = STAFF_REGISTER
-
-        model = self.model
-        opts = model._meta
-        add = True
-        obj = None
-        object_id = None
-
-        ModelForm = self.get_form(request, obj)
+        ModelForm = self.get_form(request, None)
 
         if request.method == 'POST':
-            form = ModelForm(request.POST, request.FILES, instance=obj)
+            form = ModelForm(request.POST, request.FILES, instance=None)
             if form.is_valid():
                 form_validated = True
-                new_object = self.save_form(request, form, change=not add)
+                new_object = self.save_form(request, form, change=False)
             else:
                 form_validated = False
                 new_object = form.instance
 
             formsets, inline_instances = self._create_formsets(request, new_object)
             if all_valid(formsets) and form_validated:
-                self.save_model(request, new_object, form, not add)
+                self.save_model(request, new_object, form, False)
 
             self.log_addition(request, new_object)
             return self.response_add(request, new_object, post_url_continue='/management/login/')
@@ -160,36 +153,38 @@ class StaffAdmin(admin.ModelAdmin):
             form = ModelForm(initial=initial)
             formsets, inline_instances = self._create_formsets(request, self.model())
 
-        adminForm = helpers.AdminForm(
-            form,
-            list(self.get_fieldsets(request, obj)),
-            self.get_prepopulated_fields(request, obj),
-            self.get_readonly_fields(request, obj),
-            model_admin=self)
-        media = self.media + adminForm.media
+            adminForm = helpers.AdminForm(form,
+                                          list(self.get_fieldsets(request, None)),
+                                          self.get_prepopulated_fields(request, None),
+                                          self.get_readonly_fields(request, None),
+                                          model_admin=self)
+            media = self.media + adminForm.media
 
-        inline_formsets = self.get_inline_formsets(request, formsets, inline_instances, obj)
-        for inline_formset in inline_formsets:
-            media = media + inline_formset.media
+            inline_formsets = self.get_inline_formsets(request, formsets, inline_instances, None)
+            for inline_formset in inline_formsets:
+                media = media + inline_formset.media
 
-        context = dict(self.admin_site.each_context(),
-                       title=u'注册%s' % force_text(opts.verbose_name),
-                       adminform=adminForm,
-                       object_id=object_id,
-                       original=obj,
-                       is_popup=(IS_POPUP_VAR in request.POST or
-                                 IS_POPUP_VAR in request.GET),
-                       to_field=None,
-                       media=media,
-                       # formsets=formsets,
-                       inline_admin_formsets=inline_formsets,
-                       errors=helpers.AdminErrorList(form, formsets),
-                       preserved_filters=self.get_preserved_filters(request),
-        )
+            context = dict(self.admin_site.each_context(),
+                           title=u'注册%s' % force_text(self.model._meta.verbose_name),
+                           adminform=adminForm,
+                           object_id=None,
+                           original=None,
+                           is_popup=(IS_POPUP_VAR in request.POST or
+                                     IS_POPUP_VAR in request.GET),
+                           to_field=None,
+                           media=media,
+                           # formsets=formsets,
+                           inline_admin_formsets=inline_formsets,
+                           errors=helpers.AdminErrorList(form, formsets),
+                           preserved_filters=self.get_preserved_filters(request))
 
-        context.update(extra_context or {})
-
-        return self.render_change_form(request, context, add=add, change=not add, obj=obj, form_url=form_url)
+            context.update(extra_context or {})
+            return self.render_change_form(request,
+                                           context,
+                                           add=True,
+                                           change=False,
+                                           obj=None,
+                                           form_url=form_url)
 
 admin.site.register(Staff, StaffAdmin)
 management_site.register(Staff, StaffAdmin)
