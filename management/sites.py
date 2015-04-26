@@ -8,7 +8,6 @@ from django.utils import six
 from django.core.exceptions import PermissionDenied, ValidationError
 
 from management import auth
-from management.views import register
 from management.views import main_view
 from utils.user import group_check, get_group, get_user_profile
 from management.models import *

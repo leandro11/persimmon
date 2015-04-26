@@ -36,22 +36,6 @@ class StaffForm(ModelForm):
         }
 
 
-def register(request):
-    staff_formset = modelformset_factory(
-        Staff,
-        exclude=('is_active', 'last_login', 'date_joined', 'user')
-    )
-
-    if request.method == 'POST':
-        staff_formset = StaffForm(request.POST or None, request.FILES)
-        return HttpResponse('123123')
-
-    return render_to_response("management/staff_register.html", {
-        "staff_formset": staff_formset,
-        "title": u'工作人员注册',
-    }, context_instance=RequestContext(request))
-
-
 def main_view(request):
     if not request.user.is_authenticated():
         return redirect_to_login('/management/login')
