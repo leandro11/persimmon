@@ -36,12 +36,16 @@ from management.models import (Zone, Province, Staff)
 from management.sites import site as management_site
 from management.form import StaffRegisterForm
 
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
 csrf_protect_m = method_decorator(csrf_protect)
 IS_POPUP_VAR = '_popup'
 TO_FIELD_VAR = '_to_field'
+
+# Temp user only for registing of staff in company
+STAFF_REGISTER = authenticate(username='staff_register', password='staff_register')
 
 
 class ProvinceInline(admin.TabularInline):
@@ -57,7 +61,6 @@ class ProvinceAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
 
-
 admin.site.register(Province, ProvinceAdmin)
 management_site.register(Province, ProvinceAdmin)
 
@@ -68,12 +71,17 @@ class ZoneAdmin(admin.ModelAdmin):
     list_editable = ('name',)
     # inlines = [ProvinceInline, ]
 
-
 admin.site.register(Zone, ZoneAdmin)
 management_site.register(Zone, ZoneAdmin)
 
+
 class StaffAdmin(admin.ModelAdmin):
     search_fields = ['name']
+    readonly_fields = []
+    inlines = []
+    form = StaffRegisterForm
+    exclude = ['user']
+    add_form_template = 'management/register_form.html'
 
     def get_urls(self):
         urls = super(StaffAdmin, self).get_urls()
@@ -106,29 +114,23 @@ class StaffAdmin(admin.ModelAdmin):
             username = request.REQUEST.get('username')
             password = request.REQUEST.get('password1')
 
-            user = User.objects.create_user(
-                username=username, password=password, email=obj.email)
-            user.is_active = True
+            user = User.objects.create_user(username=username,
+                                            password=password,
+                                            email=obj.email)
+            user.is_staff = True
             user.is_staff = True
             user.groups.clear()
             group = Group.objects.get(name=obj.position)
+            if not group:
+                raise Exception("No group obj for position: %s" % obj.position)
             user.groups.add(group)
             user.save()
             obj.user = user
-
-        # Save model
-        obj.save()
+            obj.save()          # Save model
 
     @transaction.atomic
     def register_view(self, request, form_url='', extra_context=None):
-        self.readonly_fields = []
-        self.inlines = []
-        self.form = StaffRegisterForm
-        self.exclude = ['user']
-        self.add_form_template = 'management/register_form.html'
-
-        user = authenticate(username='temp_register', password='temp_register')  # 工作人员注册专用用户
-        request.user = user
+        request.user = STAFF_REGISTER
 
         model = self.model
         opts = model._meta
@@ -146,13 +148,13 @@ class StaffAdmin(admin.ModelAdmin):
             else:
                 form_validated = False
                 new_object = form.instance
+
             formsets, inline_instances = self._create_formsets(request, new_object)
             if all_valid(formsets) and form_validated:
                 self.save_model(request, new_object, form, not add)
 
             self.log_addition(request, new_object)
             return self.response_add(request, new_object, post_url_continue='/management/login/')
-
         else:
             initial = self.get_changeform_initial_data(request)
             form = ModelForm(initial=initial)
@@ -188,7 +190,6 @@ class StaffAdmin(admin.ModelAdmin):
         context.update(extra_context or {})
 
         return self.render_change_form(request, context, add=add, change=not add, obj=obj, form_url=form_url)
-
 
 admin.site.register(Staff, StaffAdmin)
 management_site.register(Staff, StaffAdmin)
