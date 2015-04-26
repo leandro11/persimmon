@@ -1,7 +1,6 @@
 #coding=utf-8
 
 from unittest import TestCase
-
 from mock import MagicMock, patch
 
 from management.staff_view import (
