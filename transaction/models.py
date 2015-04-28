@@ -129,6 +129,7 @@ class TransactionClaim(models.Model):
     payee_rate = models.CharField(max_length=50, blank=True, null=True, verbose_name=u'收款方银行评级')
     payee_rate_file = models.ImageField(upload_to='.', blank=True, null=True, verbose_name=u'银行评级扫描件', help_text=mark_safe('<a target="_blank" href="">银行评级说明</a>'))
     payee_bad_credit = models.TextField(max_length=500, blank=True, null=True, verbose_name=u'收款方不良信征', help_text='')
+
     payee_net_income = models.DecimalField(max_digits=11, decimal_places=2, blank=False, null=False, verbose_name=u'营收入额', help_text='单位：万元 *必填')
     payee_asset_size = models.DecimalField(max_digits=11, decimal_places=2, blank=False, null=False, verbose_name=u'资产规模', help_text='单位：万元 *必填')
     payee_debt_promise = models.BooleanField(blank=False, null=False, default=False, verbose_name=u'企业负债率承诺', help_text='承诺连同贴现贷款，企业的资产负债率不高于70% *必填')

@@ -162,12 +162,14 @@ management_site.register(TransactionType, TransactionTypeAdmin)
 
 class TransactionClaimAdmin(admin.ModelAdmin):
     search_fields = ['ticket_number']
-    list_display = ['name_link', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount']
+    list_display = [
+        'name_link', 'receivable_enterprise', 'pay_enterprise',
+        'ticket_bank', 'accept_bank', 'amount'
+    ]
     inlines = []
     exclude = []
     readonly_fields = []
-    #list_display = ['link_field', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'status']
-
+    form = ModelForm
 
     def get_urls(self):
         urls = super(TransactionClaimAdmin, self).get_urls()
@@ -188,56 +190,56 @@ class TransactionClaimAdmin(admin.ModelAdmin):
 
     @transaction.atomic
     def add_view(self, request, form_url='', extra_context=None):
-        self.inlines = [TicketFormerHolderAddInline]
         self.exclude = ['type', 'status']
-        self.form = ModelForm
-        self.readonly_fields = []
+        self.inlines = [TicketFormerHolderAddInline]
+
         if request.user.is_superuser:
             return super(TransactionClaimAdmin, self).add_view(request, form_url, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        # 仅企业联络人和执行人能进行贴现申请
-        if group_name == ENTERPRISE_CONTACTOR or group_name == ENTERPRISE_OPERATOR:
+        # Only enterprise contactor and operator could create transaction apply
+        if group_type in (MemberUserType.ENTERPRISE_CONTACTOR, MemberUserType.ENTERPRISE_OPERATOR):
             self.form = TransactionClaimAddForm
             self.change_form_template = 'member/member_change_form.html'
             extra_context = dict(title=u'发起贴现申请', )
+
             if request.method == 'POST':
                 return super(TransactionClaimAdmin, self).add_view(request, form_url, extra_context)
             else:
-                # 把enterprise_id放进get里传到TransactionClaimAddForm初始化函数，modify request.GET
+                # put enterprise_id into get which is passed to TransactionClaimAdmin
                 mutable = request.GET._mutable
                 request.GET._mutable = True
                 request.GET['enterprise_id'] = user_profile.enterprise_id
                 request.GET._mutable = mutable
                 return super(TransactionClaimAdmin, self).add_view(request, form_url, extra_context)
-        else:
-            return render_to_response("member/notify.html", {
-                "info": u'<h2>只有企业会员能够发起贴现申请，<a href="/member/main/%s">点击返回会员首页</a></h2>',
-                "title": u'非企业会员',
-                'user': request.user,
-            })
+
+        # if group_type not in ENTERPRISE_CONTACTOR and ENTERPRISE_OPERATOR
+        return render_to_response("member/notify.html", {
+            "info": u'<h2>只有企业会员能够发起贴现申请，<a href="/member/main/%s">点击返回会员首页</a></h2>',
+            "title": u'非企业会员',
+            'user': request.user,
+        })
 
     @transaction.atomic
     def change_view(self, request, object_id, form_url='', extra_context=None):
         self.exclude = []
-        self.inlines = [TicketFormerHolderAddInline]
-        self.readonly_fields = []
         self.form = ModelForm
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         if request.user.is_superuser:
             return super(TransactionClaimAdmin, self).change_view(request, object_id, form_url, extra_context)
 
-        elif group_name in (ENTERPRISE_CONTACTOR, ENTERPRISE_OPERATOR):
+        elif group_type in (MemberUserType.ENTERPRISE_CONTACTOR, MemberUserType.ENTERPRISE_OPERATOR):
             # It raises error if we set 'receivable_enterprise' as readonly, refer to TransactionClaimAddForm line 228
             # self.readonly_fields = ['status', 'receivable_enterprise']
             self.form = TransactionClaimAddForm
             return super(TransactionClaimAdmin, self).change_view(request, object_id, form_url, extra_context)
-        elif group_name in (ZONE_SERVICE, SERVICE_MANAGER, ZONE_MARKET, MARKET_MANAGER):
+        elif group_type in (StaffType.ZONE_SERVICE, StaffType.SERVICE_MANAGER,
+                            StaffType.ZONE_MARKET, StaffType.MARKET_MANAGER):
             self.readonly_fields = ['status']
             self.form = TransactionClaimAddForm
             return super(TransactionClaimAdmin, self).change_view(request, object_id, form_url, extra_context)
