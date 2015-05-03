@@ -1,13 +1,15 @@
 #coding=utf-8
 
 from django.db import models
+from django.contrib.auth.models import User, UserManager
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils.safestring import mark_safe
+
 from member.models import *
 from management.models import *
-from django.contrib.auth.models import User, UserManager
-from utils.constants import MEMBER_TYPE, MEMBER_PLATFORM
-from django.core.exceptions import ObjectDoesNotExist
 from utils.constants import *
-from django.utils.safestring import mark_safe
+from utils.constants import (
+    MEMBER_TYPE, MEMBER_PLATFORM, TransactionClaimStatus, CLAIM_STATUS)
 
 TRANSACTION_TYPE1 = u'将开汇票代理见票即贴服务'
 TRANSACTION_TYPE2 = u'持票企业委托代理见票即贴服务'
@@ -109,16 +111,6 @@ TRANSACTION_STATUS = (
     (TRANSACTION_ABORT, u'已作废'),
 )
 
-CLAIM_PENDING = 'PENDING'
-CLAIM_PASSED = 'PASSED'
-CLAIM_ABORT = 'ABORT'
-
-CLAIM_STATUS = (
-    (CLAIM_PENDING, u'待审核'),
-    (CLAIM_PASSED, u'已通过'),
-    (CLAIM_ABORT, u'已作废'),
-)
-
 
 class TransactionClaim(models.Model):
     '''
@@ -141,7 +133,10 @@ class TransactionClaim(models.Model):
     # ticket_deadline = models.DateField(blank=False, null=True, editable=True, verbose_name=u'汇票期限')
 
     # type = models.ForeignKey(TransactionType, blank=False, null=False, verbose_name=u'贴现服务类型')
-    status = models.CharField(max_length=20, choices=CLAIM_STATUS, default=CLAIM_PENDING, verbose_name=u'贴现发起状态')
+    status = models.CharField(
+        max_length=20, choices=CLAIM_STATUS,
+        default=TransactionClaimStatus.CLAIM_PENDING, verbose_name=u'贴现发起状态'
+    )
     create_time = models.DateTimeField(auto_now_add=True, editable=True, verbose_name=u'创建时间')
 
     class Meta:

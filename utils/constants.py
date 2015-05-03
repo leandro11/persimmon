@@ -209,4 +209,12 @@ TICKET_STATUS2 = (
     # (TICKET_ABORT, u'作废已核'),
 )
 
+# ======================================= Transaction Status =======================================
 
+TransactionClaimStatus = Enum({
+    'CLAIM_PENDING': ('PENDING', u'待审核'),
+    'CLAIM_PASSED': ('PASSED', u'已通过'),
+    'CLAIM_ABORT': ('ABORT', u'已作废')
+})
+
+CLAIM_STATUS = [(item[0], item[1]) for item in TransactionClaimStatus.choices]

@@ -3,7 +3,7 @@
 from django.template.response import TemplateResponse
 from django.db.models import Q
 
-from utils.constants import MemberUserType
+from utils.constants import MemberUserType, TransactionClaimStatus
 from transaction.models import *
 
 class BaseMemberView(object):
@@ -69,7 +69,7 @@ class BankContactorView(BaseMemberView):
         ).order_by('-id')[:10]
 
         pending_claim = TransactionClaim.objects.filter(
-            Q(status=CLAIM_PENDING),
+            Q(status=TransactionClaimStatus.CLAIM_PENDING),
             Q(ticket_bank=member.id) | Q(accept_bank=member.id)
         ).order_by('-id')[:10]
 
@@ -121,7 +121,7 @@ class BankOperatorView(BaseMemberView):
         ).order_by('-id')[:10]
 
         pending_claim = TransactionClaim.objects.filter(
-            Q(status=CLAIM_PENDING),
+            Q(status=TransactionClaimStatus.CLAIM_PENDING),
             Q(ticket_bank=member.id) | Q(accept_bank=member.id)
         ).order_by('-id')[:10]
 
@@ -173,7 +173,7 @@ class EnterpriseContactorView(BaseMemberView):
         ).order_by('-id')[:10]
 
         pending_claim = TransactionClaim.objects.filter(
-            Q(status=CLAIM_PENDING),
+            Q(status=TransactionClaimStatus.CLAIM_PENDING),
             Q(receivable_enterprise=member.id) | Q(pay_enterprise=member.id)
         ).order_by('-id')[:10]
 
@@ -226,7 +226,7 @@ class EnterpriseOperatorView(BaseMemberView):
         ).order_by('-id')[:10]
 
         pending_claim = TransactionClaim.objects.filter(
-            Q(status=CLAIM_PENDING),
+            Q(status=TransactionClaimStatus.CLAIM_PENDING),
             Q(receivable_enterprise=member.id) | Q(pay_enterprise=member.id)
         ).order_by('-id')[:10]
 

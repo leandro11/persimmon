@@ -4,7 +4,7 @@ from django.template.response import TemplateResponse
 from django.db.models import Q
 
 from transaction.models import (TransactionClaim, TransactionOrder, TRANSACTION_PROCESSING,
-    TRANSACTION_DONE, TRANSACTION_ABORT, CLAIM_PENDING, CLAIM_PASSED, CLAIM_ABORT)
+    TRANSACTION_DONE, TRANSACTION_ABORT)
 from member.models import (Enterprise, Bank, RegisterInvitationCode, MEMBER_ENABLED,
     MEMBER_PENDING, MEMBER_DISABLED, MEMBER_EXPIRED, CODE_ACTIVATED)
 from utils.constants import StaffType
@@ -12,7 +12,7 @@ from ticket.models import TransactionTicket, Invoice
 from utils.constants import (
     StaffType, TICKET_RECEIVED_PENDING, TICKET_RECEIVED, TICKET_VERIFIED_PENDING, TICKET_VERIFIED,
     TICKET_CHECKIN_PENDING, TICKET_CHECKIN, TICKET_CHECKOUT_PENDING, TICKET_CHECKOUT,
-    INVOICE_LODGED, INVOICE_FINISHED, INVOICE_UNLODGED, TICKET_UNRECEIVED)
+    INVOICE_LODGED, INVOICE_FINISHED, INVOICE_UNLODGED, TICKET_UNRECEIVED, TransactionClaimStatus)
 
 
 class BaseStaffView(object):
@@ -79,7 +79,7 @@ class MarketManagerView(BaseStaffView):
     def create_dashboard(self):
         # Get pending claim for market staff
         pending_claim = TransactionClaim.objects.filter(
-            status=CLAIM_PENDING).order_by('-create_time')[:5]
+            status=TransactionClaimStatus.CLAIM_PENDING).order_by('-create_time')[:5]
 
         # Get Enterprise customers, including service and referee
         enterprise_customers = Enterprise.objects.filter(
@@ -117,7 +117,7 @@ class ZoneMarketView(BaseStaffView):
     def create_dashboard(self):
         # Get pending claim for market staff
         pending_claim = TransactionClaim.objects.filter(
-            status=CLAIM_PENDING).order_by('-create_time')[:5]
+            status=TransactionClaimStatus.CLAIM_PENDING).order_by('-create_time')[:5]
 
         # Get Enterprise customers, including service and referee
         enterprise_customers = Enterprise.objects.filter(

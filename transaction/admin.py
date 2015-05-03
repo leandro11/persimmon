@@ -190,7 +190,7 @@ class TransactionClaimAdmin(admin.ModelAdmin):
 
     @transaction.atomic
     def add_view(self, request, form_url='', extra_context=None):
-        self.exclude = ['type', 'status']
+        self.exclude = ['status']
         self.inlines = [TicketFormerHolderAddInline]
 
         if request.user.is_superuser:
