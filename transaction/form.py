@@ -212,20 +212,24 @@ class TransactionClaimAddForm(forms.ModelForm):
     class Meta:
         model = TransactionClaim
         fields = '__all__'
-        # readonly_fields = ['receivable_enterprise', ]
 
     def __init__(self, *args, **kwargs):
         super(TransactionClaimAddForm, self).__init__(*args, **kwargs)
 
         # for add
-        if 'initial' in kwargs and kwargs['initial'] and 'enterprise_id' in kwargs['initial']:
-            self.fields['receivable_enterprise'].queryset = Enterprise.objects.filter(pk=kwargs['initial']['enterprise_id'])
+        if ('initial' in kwargs and
+            kwargs['initial'] and
+            'enterprise_id' in kwargs['initial']):
+
+            self.fields['receivable_enterprise'].queryset = \
+                Enterprise.objects.filter(pk=kwargs['initial']['enterprise_id'])
             self.fields['receivable_enterprise'].widget.attrs.update({'disabled': 'true'})
             self.fields['receivable_enterprise'].empty_label = None
             self.fields['receivable_enterprise'].empty_value = []
         # for change
-        elif 'instance' in kwargs and kwargs['instance']:
-            self.fields['receivable_enterprise'].queryset = Enterprise.objects.filter(pk=kwargs['instance'].receivable_enterprise_id)
+        else:
+            self.fields['receivable_enterprise'].queryset = \
+                Enterprise.objects.filter(pk=kwargs['instance'].receivable_enterprise_id)
             self.fields['receivable_enterprise'].widget.attrs.update({'disabled': 'true'})
             self.fields['receivable_enterprise'].empty_label = None
             self.fields['receivable_enterprise'].empty_value = []
