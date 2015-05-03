@@ -14,7 +14,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from management.models import Staff
 from management.auth import login, logout, logout_then_login, redirect_to_login
 from transaction.models import (TransactionClaim, TransactionOrder, TRANSACTION_PROCESSING,
-    TRANSACTION_DONE, TRANSACTION_ABORT, CLAIM_PENDING, CLAIM_PASSED, CLAIM_ABORT)
+    TRANSACTION_DONE, TRANSACTION_ABORT)
 from member.models import (Enterprise, Bank, RegisterInvitationCode, MEMBER_ENABLED,
     MEMBER_PENDING, MEMBER_DISABLED, MEMBER_EXPIRED, CODE_ACTIVATED)
 from utils.user import get_user_profile
