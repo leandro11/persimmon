@@ -225,26 +225,32 @@ class TransactionClaimAdmin(admin.ModelAdmin):
     @transaction.atomic
     def change_view(self, request, object_id, form_url='', extra_context=None):
         self.exclude = []
-        self.form = ModelForm
+        self.form = TransactionClaimAddForm
 
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
 
         if request.user.is_superuser:
-            return super(TransactionClaimAdmin, self).change_view(request, object_id, form_url, extra_context)
+            return super(TransactionClaimAdmin, self).change_view(request,
+                                                                  object_id,
+                                                                  form_url,
+                                                                  extra_context)
 
-        elif group_type in (MemberUserType.ENTERPRISE_CONTACTOR, MemberUserType.ENTERPRISE_OPERATOR):
-            # It raises error if we set 'receivable_enterprise' as readonly, refer to TransactionClaimAddForm line 228
-            # self.readonly_fields = ['status', 'receivable_enterprise']
-            self.form = TransactionClaimAddForm
-            return super(TransactionClaimAdmin, self).change_view(request, object_id, form_url, extra_context)
-        elif group_type in (StaffType.ZONE_SERVICE, StaffType.SERVICE_MANAGER,
-                            StaffType.ZONE_MARKET, StaffType.MARKET_MANAGER):
+        if group_type in (MemberUserType.ENTERPRISE_CONTACTOR,
+                          MemberUserType.ENTERPRISE_OPERATOR):
+            return super(TransactionClaimAdmin, self).change_view(request,
+                                                                  object_id,
+                                                                  form_url,
+                                                                  extra_context)
+
+        if group_type in (StaffType.ZONE_SERVICE, StaffType.SERVICE_MANAGER,
+                          StaffType.ZONE_MARKET, StaffType.MARKET_MANAGER):
             self.readonly_fields = ['status']
-            self.form = TransactionClaimAddForm
-            return super(TransactionClaimAdmin, self).change_view(request, object_id, form_url, extra_context)
-        else:
-            raise PermissionDenied
+            return super(TransactionClaimAdmin, self).change_view(request,
+                                                                  object_id,
+                                                                  form_url,
+                                                                  extra_context)
+        raise PermissionDenied
 
     @transaction.atomic
     def confirm_view(self, request, object_id, form_url='', extra_context=None):
