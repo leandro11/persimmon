@@ -3,7 +3,7 @@
 from django.template.response import TemplateResponse
 from django.db.models import Q
 
-from utils.constants import MemberUserType, TransactionClaimStatus
+from utils.constants import MemberUserType, TransactionClaimStatus, TransactionStatus
 from transaction.models import *
 
 class BaseMemberView(object):
@@ -59,12 +59,12 @@ class BankContactorView(BaseMemberView):
         contactor_id = member.contactor.id
 
         ongoing_orders = TransactionOrder.objects.filter(
-            Q(status=TRANSACTION_PROCESSING),
+            Q(status=TransactionStatus.TRANSACTION_PROCESSING),
             Q(ticket_bank=member.id) | Q(accept_bank=member.id)
         ).order_by('-id')[:10]
 
         finished_orders = TransactionOrder.objects.filter(
-            Q(status=TRANSACTION_DONE),
+            Q(status=TransactionStatus.TRANSACTION_DONE),
             Q(ticket_bank=member.id) | Q(accept_bank=member.id)
         ).order_by('-id')[:10]
 
@@ -111,12 +111,12 @@ class BankOperatorView(BaseMemberView):
         contactor_id = member.contactor.id
 
         ongoing_orders = TransactionOrder.objects.filter(
-            Q(status=TRANSACTION_PROCESSING),
+            Q(status=TransactionStatus.TRANSACTION_PROCESSING),
             Q(ticket_bank=member.id) | Q(accept_bank=member.id)
         ).order_by('-id')[:10]
 
         finished_orders = TransactionOrder.objects.filter(
-            Q(status=TRANSACTION_DONE),
+            Q(status=TransactionStatus.TRANSACTION_DONE),
             Q(ticket_bank=member.id) | Q(accept_bank=member.id)
         ).order_by('-id')[:10]
 
@@ -163,12 +163,12 @@ class EnterpriseContactorView(BaseMemberView):
         contactor_id = member.contactor.id
 
         ongoing_orders = TransactionOrder.objects.filter(
-            Q(status=TRANSACTION_PROCESSING),
+            Q(status=TransactionStatus.TRANSACTION_PROCESSING),
             Q(receivable_enterprise=member.id) | Q(pay_enterprise=member.id)
         ).order_by('-id')[:10]
 
         finished_orders = TransactionOrder.objects.filter(
-            Q(status=TRANSACTION_DONE),
+            Q(status=TransactionStatus.TRANSACTION_DONE),
             Q(receivable_enterprise=member.id) | Q(pay_enterprise=member.id)
         ).order_by('-id')[:10]
 
@@ -216,12 +216,12 @@ class EnterpriseOperatorView(BaseMemberView):
         contactor_id = member.contactor.id
 
         ongoing_orders = TransactionOrder.objects.filter(
-            Q(status=TRANSACTION_PROCESSING),
+            Q(status=TransactionStatus.TRANSACTION_PROCESSING),
             Q(receivable_enterprise=member.id) | Q(pay_enterprise=member.id)
         ).order_by('-id')[:10]
 
         finished_orders = TransactionOrder.objects.filter(
-            Q(status=TRANSACTION_DONE),
+            Q(status=TransactionStatus.TRANSACTION_DONE),
             Q(receivable_enterprise=member.id) | Q(pay_enterprise=member.id)
         ).order_by('-id')[:10]
 

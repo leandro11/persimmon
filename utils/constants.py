@@ -84,7 +84,7 @@ class Enum(object):
         else:
             return descriptions[description][0]
 
-#================================================ 管理员的角色列表 =============================================
+#================================================ Staff Role Type =============================================
 
 StaffType = Enum({
     'MARKET_MANAGER': (5, u"市场部总经理"),
@@ -99,7 +99,7 @@ StaffType = Enum({
 
 STAFF_TYPE = [(item[1], item[1]) for item in StaffType.choices]
 
-#================================================ 用户角色名称 =============================================
+#================================================ Member Role Type =============================================
 
 MemberType = Enum({
     'MEMBER_BANK': (1, u'银行会员'),
@@ -115,6 +115,93 @@ MemberUserType = Enum({
 })
 
 MEMBER_USER_TYPE = [(item[1], item[1]) for item in MemberType.choices]
+
+# ======================================= Invoice Status =======================================
+InvoiceStatus = Enum({
+    'INVOICE_UNLODGED': ('UNLODGED', u'未开具'),
+    'INVOICE_LODGED': ('LODGED', u'已开具'),
+    'INVOICE_PENDING': ('PENDING', u'待审核'),
+    'INVOICE_FINISHED': ('FINISHED', u'已寄出'),
+    'INVOICE_ABORT': ('ABORT', u'已作废')
+})
+
+# for invoice model
+INVOICE_STATUS = (
+    (InvoiceStatus.INVOICE_LODGED, InvoiceStatus.get_description(InvoiceStatus.INVOICE_LODGED)),
+    (InvoiceStatus.INVOICE_FINISHED, InvoiceStatus.get_description(InvoiceStatus.INVOICE_FINISHED))
+)
+
+# for transaction order model
+INVOICE_STATUS2 = (
+    (InvoiceStatus.INVOICE_UNLODGED, InvoiceStatus.get_description(InvoiceStatus.INVOICE_UNLODGED)),
+    (InvoiceStatus.INVOICE_LODGED, InvoiceStatus.get_description(InvoiceStatus.INVOICE_LODGED)),
+    (InvoiceStatus.INVOICE_FINISHED, InvoiceStatus.get_description(InvoiceStatus.INVOICE_FINISHED))
+)
+
+# ======================================= Ticket Status =======================================
+TicketStatus = Enum({
+    'TICKET_RECEIVED': ('RECEIVED', u'收票完成'),
+    'TICKET_VERIFIED': ('VERIFIED', u'验票完成'),
+    'TICKET_CHECKIN': ('CHECKIN', u'入库完成'),
+    'TICKET_CHECKOUT': ('CHECKOUT', u'出库完成'),
+    'TICKET_ABORT': ('ABORT', u'作废已核'),
+    'TICKET_RECEIVED_PENDING': ('RECEIVED_PENDING', u'收票待核'),
+    'TICKET_VERIFIED_PENDING': ('VERIFIED_PENDING', u'验票待核'),
+    'TICKET_CHECKIN_PENDING': ('CHECKIN_PENDING', u'入库待核'),
+    'TICKET_CHECKOUT_PENDING': ('CHECKOUT_PENDING', u'出库待核'),
+    'TICKET_ABORT_PENDING': ('ABOR_PENDINGT', u'作废待核'),
+    'TICKET_UNRECEIVED': ('UNRECEIVED', u'未收票'),
+})
+
+# for tansaction ticket model
+TICKET_STATUS = (
+    (TicketStatus.TICKET_RECEIVED_PENDING, TicketStatus.get_description(TicketStatus.TICKET_RECEIVED_PENDING)),
+    (TicketStatus.TICKET_RECEIVED, TicketStatus.get_description(TicketStatus.TICKET_RECEIVED)),
+    (TicketStatus.TICKET_VERIFIED_PENDING, TicketStatus.get_description(TicketStatus.TICKET_VERIFIED_PENDING)),
+    (TicketStatus.TICKET_VERIFIED, TicketStatus.get_description(TicketStatus.TICKET_VERIFIED)),
+    (TicketStatus.TICKET_CHECKIN_PENDING, TicketStatus.get_description(TicketStatus.TICKET_CHECKIN_PENDING)),
+    (TicketStatus.TICKET_CHECKIN, TicketStatus.get_description(TicketStatus.TICKET_CHECKIN)),
+    (TicketStatus.TICKET_CHECKOUT_PENDING, TicketStatus.get_description(TicketStatus.TICKET_CHECKOUT_PENDING)),
+    (TicketStatus.TICKET_CHECKOUT, TicketStatus.get_description(TicketStatus.TICKET_CHECKOUT))
+)
+
+# for tansaction order model
+TICKET_STATUS2 = (
+    (TicketStatus.TICKET_UNRECEIVED, TicketStatus.get_description(TicketStatus.TICKET_UNRECEIVED)),
+    (TicketStatus.TICKET_RECEIVED_PENDING, TicketStatus.get_description(TicketStatus.TICKET_RECEIVED_PENDING)),
+    (TicketStatus.TICKET_RECEIVED, TicketStatus.get_description(TicketStatus.TICKET_RECEIVED)),
+    (TicketStatus.TICKET_VERIFIED_PENDING, TicketStatus.get_description(TicketStatus.TICKET_VERIFIED_PENDING)),
+    (TicketStatus.TICKET_VERIFIED, TicketStatus.get_description(TicketStatus.TICKET_VERIFIED)),
+    (TicketStatus.TICKET_CHECKIN_PENDING, TicketStatus.get_description(TicketStatus.TICKET_CHECKIN_PENDING)),
+    (TicketStatus.TICKET_CHECKIN, TicketStatus.get_description(TicketStatus.TICKET_CHECKIN)),
+    (TicketStatus.TICKET_CHECKOUT_PENDING, TicketStatus.get_description(TicketStatus.TICKET_CHECKOUT_PENDING)),
+    (TicketStatus.TICKET_CHECKOUT, TicketStatus.get_description(TicketStatus.TICKET_CHECKOUT))
+)
+
+# ======================================= Transaction Claim Status =======================================
+
+TransactionClaimStatus = Enum({
+    'CLAIM_PENDING': ('PENDING', u'待审核'),
+    'CLAIM_PASSED': ('PASSED', u'已通过'),
+    'CLAIM_ABORT': ('ABORT', u'已作废')
+})
+
+CLAIM_STATUS = [(item[0], item[1]) for item in TransactionClaimStatus.choices]
+
+# ======================================= Transaction Status =======================================
+
+TransactionStatus = Enum({
+    'TRANSACTION_PROCESSING': ('PROCESSING', u'进行中'),
+    'TRANSACTION_DONE': ('DONE', u'已完成'),
+    'TRANSACTION_ABORT': ('ABORT', u'已作废'),
+})
+
+TRANSACTION_STATUS = (
+    (TransactionStatus.TRANSACTION_PROCESSING, TransactionStatus.get_description(TransactionStatus.TRANSACTION_PROCESSING)),
+    (TransactionStatus.TRANSACTION_DONE, TransactionStatus.get_description(TransactionStatus.TRANSACTION_DONE)),
+    (TransactionStatus.TRANSACTION_ABORT, TransactionStatus.get_description(TransactionStatus.TRANSACTION_ABORT)),
+)
+
 #=============================================================================================
 
 MEMBER_BANK = u'BANK'
@@ -126,95 +213,3 @@ MEMBER_TYPE = (
     (MEMBER_ENTERPRISE, '企业会员'),
     (MEMBER_PLATFORM, '怡智融通'),
 )
-
-# BANK_CONTACTOR = u'银行会员主联络人'
-# BANK_OPERATOR = u'银行会员执行人'
-# ENTERPRISE_CONTACTOR = u'企业会员主联络人'
-# ENTERPRISE_OPERATOR = u'企业会员执行人'
-
-# MEMBER_USER_TYPE = (
-#     (BANK_CONTACTOR, BANK_CONTACTOR),
-#     (BANK_OPERATOR, BANK_OPERATOR),
-#     (ENTERPRISE_CONTACTOR, ENTERPRISE_CONTACTOR),
-#     (ENTERPRISE_OPERATOR, ENTERPRISE_OPERATOR),
-# )
-
-# ======================================= 发票状态 =======================================
-INVOICE_UNLODGED = 'UNLODGED'
-# INVOICE_LODGED = 'LODGED'
-INVOICE_LODGED = 'LODGED'
-INVOICE_PENDING = 'PENDING'
-INVOICE_FINISHED = 'FINISHED'
-INVOICE_ABORT = 'ABORT'
-
-# for invoice model
-INVOICE_STATUS = (
-    # (INVOICE_UNLODGED, u'未开具'),
-    # (INVOICE_LODGED, u'已申请'),
-    (INVOICE_LODGED, u'已开具'),
-    # (INVOICE_PENDING, u'待审核'),
-    (INVOICE_FINISHED, u'已寄出'),
-    # (INVOICE_ABORT, u'已作废'),
-)
-
-# for transaction order model
-INVOICE_STATUS2 = (
-    (INVOICE_UNLODGED, u'未开具'),
-    # (INVOICE_LODGED, u'已申请'),
-    (INVOICE_LODGED, u'已开具'),
-    # (INVOICE_PENDING, u'待审核'),
-    (INVOICE_FINISHED, u'已寄出'),
-    # (INVOICE_ABORT, u'已作废'),
-)
-
-# ======================================= 汇票状态 =======================================
-
-TICKET_RECEIVED = 'RECEIVED'
-TICKET_VERIFIED = 'VERIFIED'
-TICKET_CHECKIN = 'CHECKIN'
-TICKET_CHECKOUT = 'CHECKOUT'
-TICKET_ABORT = 'ABORT'
-TICKET_RECEIVED_PENDING = 'RECEIVED_PENDING'
-TICKET_VERIFIED_PENDING = 'VERIFIED_PENDING'
-TICKET_CHECKIN_PENDING = 'CHECKIN_PENDING'
-TICKET_CHECKOUT_PENDING = 'CHECKOUT_PENDING'
-TICKET_ABORT_PENDING = 'ABOR_PENDINGT'
-TICKET_UNRECEIVED = 'UNRECEIVED'
-
-# for tansaction ticket model
-TICKET_STATUS = (
-    # (TICKET_UNRECEIVED, u'未开始'),
-    (TICKET_RECEIVED_PENDING, u'收票待核'),
-    (TICKET_RECEIVED, u'收票完成'),
-    (TICKET_VERIFIED_PENDING, u'验票待核'),
-    (TICKET_VERIFIED, u'验票完成'),
-    (TICKET_CHECKIN_PENDING, u'入库待核'),
-    (TICKET_CHECKIN, u'入库完成'),
-    (TICKET_CHECKOUT_PENDING, u'出库待核'),
-    (TICKET_CHECKOUT, u'出库完成'),
-)
-
-# for tansaction order model
-TICKET_STATUS2 = (
-    (TICKET_UNRECEIVED, u'未收票'),
-    (TICKET_RECEIVED_PENDING, u'收票待核'),
-    (TICKET_RECEIVED, u'收票已核'),
-    (TICKET_VERIFIED_PENDING, u'验票待核'),
-    (TICKET_VERIFIED, u'验票已核'),
-    (TICKET_CHECKIN_PENDING, u'入库待核'),
-    (TICKET_CHECKIN, u'入库已核'),
-    (TICKET_CHECKOUT_PENDING, u'出库待核'),
-    (TICKET_CHECKOUT, u'出库已核'),
-    # (TICKET_ABORT_PENDING, u'作废待核'),
-    # (TICKET_ABORT, u'作废已核'),
-)
-
-# ======================================= Transaction Status =======================================
-
-TransactionClaimStatus = Enum({
-    'CLAIM_PENDING': ('PENDING', u'待审核'),
-    'CLAIM_PASSED': ('PASSED', u'已通过'),
-    'CLAIM_ABORT': ('ABORT', u'已作废')
-})
-
-CLAIM_STATUS = [(item[0], item[1]) for item in TransactionClaimStatus.choices]

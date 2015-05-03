@@ -34,7 +34,8 @@ from utils.constants import MEMBER_TYPE, MEMBER_PLATFORM, MEMBER_ENTERPRISE, MEM
 from utils.constants import StaffType
 from management.sites import site as management_site
 from transaction.models import *
-from utils.constants import MemberUserType, MEMBER_USER_TYPE
+from utils.constants import (
+    MemberUserType, MEMBER_USER_TYPE, TransactionClaimStatus, CLAIM_STATUS, TransactionStatus)
 from utils.user import group_check, get_group, get_user_profile
 
 reload(sys)
@@ -256,10 +257,13 @@ class TransactionClaimAdmin(admin.ModelAdmin):
     def confirm_view(self, request, object_id, form_url='', extra_context=None):
         self.inlines = [TicketFormerHolderAddInline, TransactionOrderConfirmInline]
         self.exclude = ['status']
-        # 该申请已生成过订单
+
+        # This application has been confirmed
         claim = TransactionClaim.objects.get(id=long(object_id))
-        if claim.status != CLAIM_PENDING:
-            return HttpResponse(u'贴现申请已通过审核')
+        if claim.status in (TransactionClaimStatus.CLAIM_PASSED,
+                            TransactionClaimStatus.CLAIM_ABORT):
+            description = TransactionClaimStatus.get_description(claim.status)
+            return HttpResponse("贴现申请%s" % description)
 
         # 把收款企业的ID传递到inline
         mutable = request.GET._mutable
@@ -273,21 +277,28 @@ class TransactionClaimAdmin(admin.ModelAdmin):
             return super(TransactionClaimAdmin, self).change_view(request, object_id, form_url, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
-        # 市场部经理和区域市场经理来审核贴现申请
-        if group_name == MARKET_MANAGER or group_name == ZONE_MARKET:
+        group_type = None if user_profile is None else user_profile.grouptype
+
+        # market manager or zone market manager need to confirm application
+        if group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_MARKET):
             self.change_form_template = 'management/change_form.html'
-            result = super(TransactionClaimAdmin, self).change_view(request, object_id, form_url, extra_context)
-            # 添加成功才会返回HttpResponseRedirect，验证失败返回TemplateResponse
+            result = super(TransactionClaimAdmin, self).change_view(request,
+                                                                    object_id,
+                                                                    form_url,
+                                                                    extra_context)
+
+            # Return HttpResponseRedirect if add successfully, return TemplateResponse if validating failed
             if request.method == 'POST' and isinstance(result, HttpResponseRedirect):
-                # 重置对用户的提醒信息
+                # reset warning message
                 request._messages = FallbackStorage(request)
                 self.message_user(request, u'贴现申请已通过审核', messages.SUCCESS)
-                # 逻辑完成后返回changelist页面
+
+                # return changelist view
                 return super(TransactionClaimAdmin, self).changelist_view(request, extra_context)
+
             return result
-        else:
-            raise PermissionDenied
+
+        raise PermissionDenied
 
     def save_related(self, request, form, formsets, change):
         if request.path.find('/confirm') < 0:
@@ -390,7 +401,7 @@ class TransactionClaimAdmin(admin.ModelAdmin):
         title = u'全部贴现申请'
         if u'status__exact' in request.GET:
             status = request.GET[u'status__exact'].lower()
-            if status == CLAIM_PENDING.lower():
+            if status == TransactionClaimStatus.CLAIM_PENDING.lower():
                 self.list_display = ['confirm_number_link', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'confirm_button_link']
                 title = u'待审核的贴现申请'
             elif status == CLAIM_PASSED.lower():
@@ -659,11 +670,11 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         title = u'全部贴现服务订单'
         if u'status__exact' in request.GET:
             status = request.GET[u'status__exact'].lower()
-            if status == TRANSACTION_DONE.lower():
+            if status == TransactionStatus.TRANSACTION_DONE.lower():
                 title = u'已完成的'
-            elif status == TRANSACTION_PROCESSING.lower():
+            elif status == TransactionStatus.TRANSACTION_PROCESSING.lower():
                 title = u'进行中的'
-            elif status == TRANSACTION_ABORT.lower():
+            elif status == TransactionStatus.TRANSACTION_ABORT.lower():
                 title = u'已作废的'
 
         extra_context = dict(
@@ -750,12 +761,12 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
         order = TransactionOrder.objects.get(id=long(object_id))
 
-        if order.status == TRANSACTION_PROCESSING:
+        if order.status == TransactionStatus.TRANSACTION_PROCESSING:
             self.inlines = [TicketFormerHolderReadonlyInline]
             self.exclude = ['transaction_claim', 'finish_time', 'invoice', 'ticket']
             self.readonly_fields = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'status',
                                     'create_time', 'invoice_status', 'ticket_status']
-        elif order.status == TRANSACTION_DONE:
+        elif order.status == TransactionStatus.TRANSACTION_DONE:
             self.inlines = [TicketFormerHolderReadonlyInline]
             self.exclude = ['transaction_claim', ]
             self.readonly_fields = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'status',

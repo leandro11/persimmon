@@ -13,12 +13,12 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 from management.models import Staff
 from management.auth import login, logout, logout_then_login, redirect_to_login
-from transaction.models import (TransactionClaim, TransactionOrder, TRANSACTION_PROCESSING,
-    TRANSACTION_DONE, TRANSACTION_ABORT)
+from transaction.models import (TransactionClaim, TransactionOrder)
 from member.models import (Enterprise, Bank, RegisterInvitationCode, MEMBER_ENABLED,
     MEMBER_PENDING, MEMBER_DISABLED, MEMBER_EXPIRED, CODE_ACTIVATED)
 from utils.user import get_user_profile
 from management.staff_view import BaseStaffView
+from utils.constants import TransactionStatus
 
 
 csrf_protect_m = method_decorator(csrf_protect)

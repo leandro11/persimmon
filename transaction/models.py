@@ -9,7 +9,9 @@ from member.models import *
 from management.models import *
 from utils.constants import *
 from utils.constants import (
-    MEMBER_TYPE, MEMBER_PLATFORM, TransactionClaimStatus, CLAIM_STATUS)
+    MEMBER_TYPE, MEMBER_PLATFORM, TransactionClaimStatus, CLAIM_STATUS,
+    InvoiceStatus, INVOICE_STATUS, INVOICE_STATUS2, TicketStatus,
+    TICKET_STATUS, TICKET_STATUS2, TransactionStatus, TRANSACTION_STATUS)
 
 TRANSACTION_TYPE1 = u'将开汇票代理见票即贴服务'
 TRANSACTION_TYPE2 = u'持票企业委托代理见票即贴服务'
@@ -99,19 +101,6 @@ class TransactionMetaOperation(models.Model):
         return ''
 
 
-# TRANSACTION_START = 'START'
-TRANSACTION_PROCESSING = 'PROCESSING'
-TRANSACTION_DONE = 'DONE'
-TRANSACTION_ABORT = 'ABORT'
-
-TRANSACTION_STATUS = (
-    # (TRANSACTION_START, u'新生成'),
-    (TRANSACTION_PROCESSING, u'进行中'),
-    (TRANSACTION_DONE, u'已完成'),
-    (TRANSACTION_ABORT, u'已作废'),
-)
-
-
 class TransactionClaim(models.Model):
     '''
     贴现申请记录，由收款企业填写
@@ -130,9 +119,7 @@ class TransactionClaim(models.Model):
     ticket_bank = models.CharField(max_length=50, blank=False, null=False, verbose_name=u'贴现银行', help_text='*必填')
     accept_bank = models.CharField(max_length=50, blank=False, null=False, verbose_name=u'承兑银行', help_text='*必填')
     amount = models.DecimalField(max_digits=11, decimal_places=2, blank=False, null=False, verbose_name=u'金额', help_text='*必填')
-    # ticket_deadline = models.DateField(blank=False, null=True, editable=True, verbose_name=u'汇票期限')
 
-    # type = models.ForeignKey(TransactionType, blank=False, null=False, verbose_name=u'贴现服务类型')
     status = models.CharField(
         max_length=20, choices=CLAIM_STATUS,
         default=TransactionClaimStatus.CLAIM_PENDING, verbose_name=u'贴现发起状态'
@@ -186,9 +173,15 @@ class TransactionOrder(models.Model):
     amount = models.DecimalField(max_digits=11, decimal_places=2, blank=False, null=False, verbose_name=u'贴现金额')
     type = models.ForeignKey(TransactionType, blank=False, null=False, verbose_name=u'贴现服务类型')
     fee = models.DecimalField(max_digits=10, decimal_places=2, blank=False, null=False, verbose_name=u'服务费  ')
-    invoice_status = models.CharField(max_length=30, choices=INVOICE_STATUS2, default=INVOICE_UNLODGED, verbose_name=u'发票状态')
-    ticket_status = models.CharField(max_length=30, choices=TICKET_STATUS2, default=TICKET_UNRECEIVED, verbose_name=u'汇票状态')
-    status = models.CharField(max_length=20, choices=TRANSACTION_STATUS, default=TRANSACTION_PROCESSING, verbose_name=u'贴现订单状态')
+    invoice_status = models.CharField(
+        max_length=30, choices=INVOICE_STATUS2,
+        default=InvoiceStatus.INVOICE_UNLODGED, verbose_name=u'发票状态'
+    )
+    ticket_status = models.CharField(
+        max_length=30, choices=TICKET_STATUS2,
+        default=TicketStatus.TICKET_UNRECEIVED, verbose_name=u'汇票状态'
+    )
+    status = models.CharField(max_length=20, choices=TRANSACTION_STATUS, default=TransactionStatus.TRANSACTION_PROCESSING, verbose_name=u'贴现订单状态')
     # ticket = models.OneToOneField(TransactionTicket, blank=True, null=True, verbose_name=u'汇票')
     # invoice = models.OneToOneField(Invoice, blank=True, null=True, verbose_name=u'发票')
     create_time = models.DateTimeField(auto_now_add=True, editable=True, verbose_name=u'创建时间')
@@ -201,30 +194,6 @@ class TransactionOrder(models.Model):
 
     def __unicode__(self):
         return u'[贴现订单]%s' % self.ticket_number
-
-        # def invoice(self):
-        #     try:
-        #         return self.invoice
-        #     except ObjectDoesNotExist:
-        #         return None
-        #
-        # def invoice_status(self):
-        #     try:
-        #         return self.invoice.status
-        #     except ObjectDoesNotExist:
-        #         return u'未开票'
-        #
-        # def ticket(self):
-        #     try:
-        #         return self.ticket
-        #     except ObjectDoesNotExist:
-        #         return None
-        #
-        # def ticket_status(self):
-        #     try:
-        #         return self.ticket.status
-        #     except ObjectDoesNotExist:
-        #         return u'未收票'
 
 
 class TicketFormerHolder(models.Model):
