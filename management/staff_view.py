@@ -3,16 +3,14 @@
 from django.template.response import TemplateResponse
 from django.db.models import Q
 
-from transaction.models import (TransactionClaim, TransactionOrder, TRANSACTION_PROCESSING,
-    TRANSACTION_DONE, TRANSACTION_ABORT)
+from transaction.models import (TransactionClaim, TransactionOrder)
 from member.models import (Enterprise, Bank, RegisterInvitationCode, MEMBER_ENABLED,
     MEMBER_PENDING, MEMBER_DISABLED, MEMBER_EXPIRED, CODE_ACTIVATED)
 from utils.constants import StaffType
 from ticket.models import TransactionTicket, Invoice
 from utils.constants import (
-    StaffType, TICKET_RECEIVED_PENDING, TICKET_RECEIVED, TICKET_VERIFIED_PENDING, TICKET_VERIFIED,
-    TICKET_CHECKIN_PENDING, TICKET_CHECKIN, TICKET_CHECKOUT_PENDING, TICKET_CHECKOUT,
-    INVOICE_LODGED, INVOICE_FINISHED, INVOICE_UNLODGED, TICKET_UNRECEIVED, TransactionClaimStatus)
+    StaffType, TransactionClaimStatus, InvoiceStatus, TicketStatus,
+    TICKET_STATUS, TICKET_STATUS2, TransactionStatus)
 
 
 class BaseStaffView(object):
@@ -155,7 +153,7 @@ class ServiceManagerView(BaseStaffView):
     def create_dashboard(self):
         # different kinds of orders
         ongoing_orders = TransactionOrder.objects.filter(
-            status=TRANSACTION_PROCESSING).order_by('-create_time')[:5]
+            status=TransactionStatus.TRANSACTION_PROCESSING).order_by('-create_time')[:5]
 
         # Get different types of enterprise members
         pending_enterprises = Enterprise.objects.filter(
@@ -189,7 +187,7 @@ class ZoneServiceView(BaseStaffView):
     def create_dashboard(self):
         # different kinds of orders
         ongoing_orders = TransactionOrder.objects.filter(
-            status=TRANSACTION_PROCESSING).order_by('-create_time')[:5]
+            status=TransactionStatus.TRANSACTION_PROCESSING).order_by('-create_time')[:5]
 
         # Get different types of enterprise members
         pending_enterprises = Enterprise.objects.filter(
@@ -226,10 +224,10 @@ class TicketDirectorView(BaseStaffView):
 
         # Get ongoing type of tickets
         pending_tickets = TransactionTicket.objects.filter(
-            Q(status=TICKET_RECEIVED_PENDING) |
-            Q(status=TICKET_VERIFIED_PENDING) |
-            Q(status=TICKET_CHECKIN_PENDING) |
-            Q(status=TICKET_CHECKOUT_PENDING)).order_by('-id')[:10]
+            Q(status=TicketStatus.TICKET_RECEIVED_PENDING) |
+            Q(status=TicketStatus.TICKET_VERIFIED_PENDING) |
+            Q(status=TicketStatus.TICKET_CHECKIN_PENDING) |
+            Q(status=TicketStatus.TICKET_CHECKOUT_PENDING)).order_by('-id')[:10]
 
         context = dict(
             user_id=self.user_profile.user.id,
@@ -254,14 +252,14 @@ class TicketConductorView(BaseStaffView):
     def create_dashboard(self):
         # Get on going orders of transaction
         ongoing_orders = TransactionOrder.objects.filter(
-            status=TRANSACTION_PROCESSING,
-            ticket_status=TICKET_UNRECEIVED).order_by('-create_time')[:5]
+            status=TransactionStatus.TRANSACTION_PROCESSING,
+            ticket_status=TicketStatus.TICKET_UNRECEIVED).order_by('-create_time')[:5]
 
         # Get ongoing type of tickets
         ongoing_tickets = TransactionTicket.objects.filter(
-            Q(status=TICKET_RECEIVED) |
-            Q(status=TICKET_VERIFIED) |
-            Q(status=TICKET_CHECKIN)).order_by('-create_time')[:5]
+            Q(status=TicketStatus.TICKET_RECEIVED) |
+            Q(status=TicketStatus.TICKET_VERIFIED) |
+            Q(status=TicketStatus.TICKET_CHECKIN)).order_by('-create_time')[:5]
 
         context = dict(
             user_id=self.user_profile.user.id,
@@ -286,12 +284,12 @@ class AccountantView(BaseStaffView):
     def create_dashboard(self):
         # Get on going orders of transaction
         ongoing_orders = TransactionOrder.objects.filter(
-            status=TRANSACTION_PROCESSING,
-            invoice_status=INVOICE_UNLODGED).order_by('-create_time')[:5]
+            status=TransactionStatus.TRANSACTION_PROCESSING,
+            invoice_status=InvoiceStatus.INVOICE_UNLODGED).order_by('-create_time')[:5]
 
         # Get different type of invoices
-        lodged_invoices = Invoice.objects.filter(status=INVOICE_LODGED).order_by('-create_time')[:5]
-        finished_invoices = Invoice.objects.filter(status=INVOICE_FINISHED).order_by('-create_time')[:5]
+        lodged_invoices = Invoice.objects.filter(status=InvoiceStatus.INVOICE_LODGED).order_by('-create_time')[:5]
+        finished_invoices = Invoice.objects.filter(status=InvoiceStatus.INVOICE_FINISHED).order_by('-create_time')[:5]
 
         context = dict(
             user_id=self.user_profile.user.id,

@@ -4,12 +4,14 @@ from django.utils.deconstruct import deconstructible
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.contrib import admin
-from transaction.models import *
-from member.models import Bank, Enterprise
 from django.forms import ModelForm
 from django import forms
 from django.db.models import Q
 from django.utils.safestring import mark_safe
+
+from transaction.models import *
+from member.models import Bank, Enterprise
+from utils.constants import TransactionStatus
 
 
 class TransactionMetaOperationForm(forms.ModelForm):
@@ -94,7 +96,6 @@ from django.forms.models import BaseInlineFormSet
 class TransactionOrderConfirmInlineFormset(BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
         super(TransactionOrderConfirmInlineFormset, self).__init__(*args, **kwargs)
-        # self.obj_id = 1
 
     # 为了传参TransactionClaim的id给TransactionOrder Inline，特意重载
     @property
@@ -152,60 +153,43 @@ class TransactionOrderConfirmForm(forms.ModelForm):
             receivable_enterprise_id = kwargs.pop('receivable_enterprise_id')
 
         super(TransactionOrderConfirmForm, self).__init__(*args, **kwargs)
-        if not receivable_enterprise_id is None:
+        if receivable_enterprise_id:
             payee_queryset = Enterprise.objects.filter(pk=receivable_enterprise_id)
             self.fields['receivable_enterprise'].queryset = payee_queryset
             self.fields['receivable_enterprise'].widget.attrs.update({'disabled': 'true'})
             self.fields['receivable_enterprise'].empty_label = None
             self.fields['receivable_enterprise'].empty_value = []
-            # 付款企业的可选项去掉收款企业，不能自己付自己收
-            self.fields['pay_enterprise'].queryset = Enterprise.objects.filter(~Q(id=receivable_enterprise_id))  # .all().exclude(pk=receivable_enterprise_id)
+
+            # Filter receivable_enterprise it-self
+            self.fields['pay_enterprise'].queryset = Enterprise.objects.filter(~Q(id=receivable_enterprise_id))
+
             # total transaction sum of payee
-            order_list = TransactionOrder.objects.filter(receivable_enterprise_id=receivable_enterprise_id, status=TRANSACTION_DONE)
-            sum = 0
-            for order in order_list:
-                sum += order.amount
-            self.fields['transaction_sum'].initial = str(sum) + u' 元'
+            order_list = TransactionOrder.objects.filter(
+                receivable_enterprise_id=receivable_enterprise_id,
+                status=TransactionStatus.TRANSACTION_DONE
+            )
+
+            total = sum([order.amount for order in order_list])
+            self.fields['transaction_sum'].initial = str(total) + u' 元'
             if payee_queryset.count():
-                self.fields['reference_count'].initial = str(payee_queryset[0].reference_count) + u' 个'
+                self.fields['reference_count'].initial = u'%d 个' % payee_queryset[0].reference_count
             else:
                 self.fields['reference_count'].initial = u'0 个'
-                # todo compute service fee automatically
-                #self.fields['fee'].initial =
-                #self.fields['fee'].widget.attrs.update({'readonly': 'readonly', 'style': 'border:0'})
 
 
 class TransactionOrderConfirmInline(admin.StackedInline):
     model = TransactionOrder
     extra = 1
-    can_delete = False
     max_num = 1
+    can_delete = False
     exclude = ['ticket_number', 'amount', 'status', 'finish_time', 'invoice_status', 'ticket_status']
     verbose_name = u'贴现服务订单基本信息'
     verbose_name_plural = u'填写以下贴现服务订单信息'
     form = TransactionOrderConfirmForm
     formset = TransactionOrderConfirmInlineFormset
 
-
     def __init__(self, *args, **kwargs):
         super(TransactionOrderConfirmInline, self).__init__(*args, **kwargs)
-        pass
-        # self.fields['fee'].widget.attrs.update({'style': 'display:none;'})
-
-        # def get_formset(self, request, obj=None, **kwargs):
-        #     # Hack! Hook parent obj just in time to use in formfield_for_manytomany
-        #     self.parent_obj = obj
-        #     return super(TransactionOrderConfirmInline, self).get_formset(request, obj, **kwargs)
-
-        # def save_model(self, request, obj, form, change):
-        #
-        #     obj.save()
-
-        # def queryset(self, request):
-        #     """Alter the queryset to return no existing entries"""
-        #     # get the existing query set, then empty it.
-        #     qs = super(TransactionOrderConfirmInline, self).queryset(request)
-        #     return qs.none()
 
 
 class TransactionClaimAddForm(forms.ModelForm):
@@ -227,7 +211,7 @@ class TransactionClaimAddForm(forms.ModelForm):
             self.fields['receivable_enterprise'].empty_label = None
             self.fields['receivable_enterprise'].empty_value = []
         # for change
-        else:
+        elif ('instance' in kwargs and kwargs['instance']):
             self.fields['receivable_enterprise'].queryset = \
                 Enterprise.objects.filter(pk=kwargs['instance'].receivable_enterprise_id)
             self.fields['receivable_enterprise'].widget.attrs.update({'disabled': 'true'})
@@ -244,19 +228,3 @@ class TransactionClaimConfirmForm(forms.ModelForm):
         super(TransactionClaimConfirmForm, self).__init__(*args, **kwargs)
         if 'instance' in kwargs and kwargs['instance']:
             self.fields['receivable_enterprise'].choices = [(kwargs['instance'].receivable_enterprise.id, kwargs['instance'].receivable_enterprise.name)]
-
-
-# class TransactionOrderForm(forms.ModelForm):
-#     hint = forms.CharField(label=_(u'收款企业业绩'), required=False, widget=forms.TextInput(attrs={'style': 'display:none;'}))
-#     invoice_status = forms.CharField(label=_(u"发票状态"), widget=forms.TextInput(attrs={'readonly': 'readonly', 'style': 'border:0'}))
-#     ticket_status = forms.CharField(label=_(u"汇票状态"), widget=forms.TextInput(attrs={'readonly': 'readonly', 'style': 'border:0'}))
-#
-#     class Meta:
-#         model = TransactionOrder
-#         fields = '__all__'
-
-
-
-
-
-
