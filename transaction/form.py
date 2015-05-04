@@ -227,4 +227,6 @@ class TransactionClaimConfirmForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(TransactionClaimConfirmForm, self).__init__(*args, **kwargs)
         if 'instance' in kwargs and kwargs['instance']:
-            self.fields['receivable_enterprise'].choices = [(kwargs['instance'].receivable_enterprise.id, kwargs['instance'].receivable_enterprise.name)]
+            self.fields['receivable_enterprise'].choices = \
+                [(kwargs['instance'].receivable_enterprise.id, kwargs['instance'].receivable_enterprise.name)]
+

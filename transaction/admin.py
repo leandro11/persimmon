@@ -1,6 +1,7 @@
 #coding=utf-8
 
-import sys, datetime
+import sys
+import datetime
 
 from django.contrib import admin
 from django.contrib.auth.models import User, Group
@@ -34,7 +35,8 @@ from utils.constants import StaffType
 from management.sites import site as management_site
 from transaction.models import *
 from utils.constants import (
-    MemberUserType, MEMBER_USER_TYPE, TransactionClaimStatus, CLAIM_STATUS, TransactionStatus)
+    MemberUserType, MEMBER_USER_TYPE, TransactionClaimStatus,
+    CLAIM_STATUS, TransactionStatus, InvoiceStatus, TicketStatus, MemberType)
 from utils.user import group_check, get_group, get_user_profile
 
 reload(sys)
@@ -323,28 +325,29 @@ class TransactionClaimAdmin(admin.ModelAdmin):
                         formset.save()
                         order_id = inline_form.instance.id
                 elif formset.form.Meta.model is TicketFormerHolder:
-                    if not transaction_type_id is None:
+                    if transaction_type_id:
                         for inline_form in formset.forms:
                             inline_form.instance.transaction_id = order_id
                             inline_form.save()
                     formset.save()
 
             # Generate process according to different process templates
-            if not transaction_type_id is None:
+            if transaction_type_id:
                 is_first = True
                 meta_operation_list = TransactionMetaOperation.objects.filter(
                     transaction_type=transaction_type_id).order_by('sequence')
                 for meta_operation in meta_operation_list:
-                    operation = TransactionOperation()
-                    operation.transaction_id = order_id
-                    operation.sequence = meta_operation.sequence
-                    operation.operation_type = meta_operation.operation_type
-                    operation.description = meta_operation.description
-                    operation.need_confirm = meta_operation.need_confirm
-                    operation.need_upload = meta_operation.need_upload
-                    operation.need_ems = meta_operation.need_ems
-                    operation.operator_member = meta_operation.operator_member
-                    operation.file_name = meta_operation.file_name
+                    operation = TransactionOperation(
+                        transaction_id=order_id,
+                        sequence=meta_operation.sequence,
+                        operation_type=meta_operation.operation_type,
+                        description=meta_operation.description,
+                        need_confirm=meta_operation.need_confirm,
+                        need_upload=meta_operation.need_upload,
+                        need_ems=meta_operation.need_ems,
+                        operator_member=meta_operation.operator_member,
+                        file_name=meta_operation.file_name
+                    )
 
                     # active first operation
                     if is_first:
@@ -740,9 +743,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
     @transaction.atomic
     def change_view(self, request, object_id, form_url='', extra_context=None):
         self.exclude = ['transaction_claim', ]
-        # self.inlines = [TicketFormerHolderAddInline]
         self.readonly_fields = []
-        # self.form = ModelForm
 
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
@@ -807,9 +808,9 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                              OPERATION_PENDING=OPERATION_PENDING,
                              OPERATION_FINISHED=OPERATION_FINISHED,
 
-                             MEMBER_BANK=MEMBER_BANK,
-                             MEMBER_ENTERPRISE=MEMBER_ENTERPRISE,
-                             MEMBER_PLATFORM=MEMBER_PLATFORM,
+                             MEMBER_BANK=MemberType.MEMBER_BANK,
+                             MEMBER_ENTERPRISE=MemberType.MEMBER_ENTERPRISE,
+                             MEMBER_PLATFORM=MemberType.MEMBER_PLATFORM,
 
                              OPERATOR_RECEIVER=OPERATOR_RECEIVER,
                              OPERATOR_PAYER=OPERATOR_PAYER,
@@ -817,9 +818,9 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                              OPERATOR_ACCEPTBANK=OPERATOR_ACCEPTBANK,
                              OPERATOR_PLATFORM=OPERATOR_PLATFORM,
 
-                             INVOICE_FINISHED=INVOICE_FINISHED,
-                             TICKET_CHECKOUT=TICKET_CHECKOUT,
-                             TRANSACTION_DONE=TRANSACTION_DONE,
+                             INVOICE_FINISHED=InvoiceStatus.INVOICE_FINISHED,
+                             TICKET_CHECKOUT=TicketStatus.TICKET_CHECKOUT,
+                             TRANSACTION_DONE=TransactionStatus.TRANSACTION_DONE,
 
                              operation_alldone=operation_alldone,
                              order=order,

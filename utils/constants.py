@@ -205,7 +205,7 @@ TRANSACTION_STATUS = (
 TransactionCategory = Enum({
     'TRANSACTION_TYPE1': (1, u'将开汇票代理见票即贴服务'),
     'TRANSACTION_TYPE2': (2, u'持票企业委托代理见票即贴服务'),
-    'TRANSACTION_TYPE3': (3, u'见票即贴期权服务'),
+    'TRANSACTION_TYPE3': (8, u'见票即贴期权服务'),
 })
 
 TRANSACTION_TYPE = [(item[0], item[1]) for item in TransactionCategory.choices]
