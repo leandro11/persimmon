@@ -313,32 +313,27 @@ class TransactionClaimAdmin(admin.ModelAdmin):
             for formset in formsets:
                 if formset.form.Meta.model is TransactionOrder and formset.has_changed():
                     for inline_form in formset.forms:
-                        # if isinstance(inline_form, TransactionOrderInline):
-                        # if inline_form.Meta.model is TransactionOrder:
-                        # if isinstance(inline_form.instance, TransactionOrder):
                         inline_form.instance.ticket_number = form.instance.ticket_number
                         inline_form.instance.amount = form.instance.amount
                         receivable_enterprise_id = form.instance.receivable_enterprise_id
                         pay_enterprise_id = inline_form.instance.pay_enterprise_id
                         ticket_bank_id = inline_form.instance.ticket_bank_id
                         accept_bank_id = inline_form.instance.accept_bank_id
-                        # inline_form.instance.ticketformerholder_set = form.instance.ticketformerholder_set
                         transaction_type_id = inline_form.instance.type_id
                         formset.save()
                         order_id = inline_form.instance.id
-
-            for formset in formsets:
-                if formset.form.Meta.model is TicketFormerHolder:
+                elif formset.form.Meta.model is TicketFormerHolder:
                     if not transaction_type_id is None:
                         for inline_form in formset.forms:
                             inline_form.instance.transaction_id = order_id
                             inline_form.save()
                     formset.save()
 
-            # 根据贴现流程模板生成贴现流程
+            # Generate process according to different process templates
             if not transaction_type_id is None:
                 is_first = True
-                meta_operation_list = TransactionMetaOperation.objects.filter(transaction_type=transaction_type_id).order_by('sequence')
+                meta_operation_list = TransactionMetaOperation.objects.filter(
+                    transaction_type=transaction_type_id).order_by('sequence')
                 for meta_operation in meta_operation_list:
                     operation = TransactionOperation()
                     operation.transaction_id = order_id
@@ -351,14 +346,13 @@ class TransactionClaimAdmin(admin.ModelAdmin):
                     operation.operator_member = meta_operation.operator_member
                     operation.file_name = meta_operation.file_name
 
-                    #将第一个操作置为激活状态
+                    # active first operation
                     if is_first:
                         operation.status = OPERATION_ACTIVATED
                         is_first = False
                     operation.save()
-            form.instance.status = CLAIM_PASSED
+            form.instance.status = TransactionClaimStatus.CLAIM_PASSED
             form.instance.save()
-            # super(TransactionClaimAdmin, self).save_related(request, form, formsets, change)
 
     def response_change(self, request, obj):
         if request.path.find('/confirm'):
