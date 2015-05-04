@@ -21,7 +21,6 @@ from django.utils.http import urlquote, urlunquote
 from transaction.models import *
 from utils.func import *
 from utils.user import get_user_profile
-from utils.constants import MEMBER_ENTERPRISE, MEMBER_BANK, MEMBER_PLATFORM
 from member.models import *
 from member.auth import login, logout, logout_then_login, redirect_to_login  #password_reset, password_change,
 from member.member_view import BaseMemberView

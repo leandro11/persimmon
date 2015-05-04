@@ -9,19 +9,9 @@ from member.models import *
 from management.models import *
 from utils.constants import *
 from utils.constants import (
-    MEMBER_TYPE, MEMBER_PLATFORM, TransactionClaimStatus, CLAIM_STATUS,
-    InvoiceStatus, INVOICE_STATUS, INVOICE_STATUS2, TicketStatus,
-    TICKET_STATUS, TICKET_STATUS2, TransactionStatus, TRANSACTION_STATUS)
-
-TRANSACTION_TYPE1 = u'将开汇票代理见票即贴服务'
-TRANSACTION_TYPE2 = u'持票企业委托代理见票即贴服务'
-TRANSACTION_TYPE3 = u'见票即贴期权服务'
-
-TRANSACTION_TYPE = (
-    (TRANSACTION_TYPE1, TRANSACTION_TYPE1),
-    (TRANSACTION_TYPE2, TRANSACTION_TYPE2),
-    (TRANSACTION_TYPE3, TRANSACTION_TYPE3),
-)
+    TransactionClaimStatus, CLAIM_STATUS, InvoiceStatus, INVOICE_STATUS,
+    INVOICE_STATUS2, TicketStatus, TICKET_STATUS, TICKET_STATUS2,
+    TransactionStatus, TRANSACTION_STATUS, TransactionCategory, TRANSACTION_TYPE)
 
 OPERATION_UPLOAD = 'UPLOAD'
 OPERATION_CONFIRM = 'CONFIRM'
@@ -66,8 +56,15 @@ class TransactionType(models.Model):
     '''
     贴现服务类型
     '''
-    name = models.CharField(unique=True, max_length=50, choices=TRANSACTION_TYPE, default=TRANSACTION_TYPE1, verbose_name=u'贴现服务类型')
-    fee = models.DecimalField(max_digits=10, decimal_places=2, blank=False, null=False, verbose_name=u'服务费率')
+    name = models.CharField(
+        unique=True, max_length=50, choices=TRANSACTION_TYPE,
+        default=TransactionCategory.get_description(TransactionCategory.TRANSACTION_TYPE1),
+        verbose_name=u'贴现服务类型'
+    )
+    fee = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=False,
+        null=False, verbose_name=u'服务费率'
+    )
 
     class Meta:
         verbose_name = u'贴现服务类型'

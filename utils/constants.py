@@ -202,14 +202,10 @@ TRANSACTION_STATUS = (
     (TransactionStatus.TRANSACTION_ABORT, TransactionStatus.get_description(TransactionStatus.TRANSACTION_ABORT)),
 )
 
-#=============================================================================================
+TransactionCategory = Enum({
+    'TRANSACTION_TYPE1': (1, u'将开汇票代理见票即贴服务'),
+    'TRANSACTION_TYPE2': (2, u'持票企业委托代理见票即贴服务'),
+    'TRANSACTION_TYPE3': (3, u'见票即贴期权服务'),
+})
 
-MEMBER_BANK = u'BANK'
-MEMBER_ENTERPRISE = u'ENTERPRISE'
-MEMBER_PLATFORM = u'PLATFORM'
-
-MEMBER_TYPE = (
-    (MEMBER_BANK, '银行会员'),
-    (MEMBER_ENTERPRISE, '企业会员'),
-    (MEMBER_PLATFORM, '怡智融通'),
-)
+TRANSACTION_TYPE = [(item[0], item[1]) for item in TransactionCategory.choices]

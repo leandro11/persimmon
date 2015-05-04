@@ -30,7 +30,6 @@ from django.http import Http404, HttpResponseNotFound
 from member.sites import site as member_site
 from ticket.form import *
 from transaction.form import *
-from utils.constants import MEMBER_TYPE, MEMBER_PLATFORM, MEMBER_ENTERPRISE, MEMBER_BANK
 from utils.constants import StaffType
 from management.sites import site as management_site
 from transaction.models import *
