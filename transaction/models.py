@@ -11,45 +11,9 @@ from utils.constants import *
 from utils.constants import (
     TransactionClaimStatus, CLAIM_STATUS, InvoiceStatus, INVOICE_STATUS,
     INVOICE_STATUS2, TicketStatus, TICKET_STATUS, TICKET_STATUS2,
-    TransactionStatus, TRANSACTION_STATUS, TransactionCategory, TRANSACTION_TYPE)
-
-OPERATION_UPLOAD = 'UPLOAD'
-OPERATION_CONFIRM = 'CONFIRM'
-OPERATION_EMS = 'EMS'
-
-OPERATION_TYPE = (
-    (OPERATION_UPLOAD, u'上传'),
-    (OPERATION_CONFIRM, u'确认'),
-    (OPERATION_EMS, u'邮寄'),
-)
-
-OPERATOR_RECEIVER = 'RECEIVER'
-OPERATOR_PAYER = 'PAYER'
-OPERATOR_TICKETBANK = 'TICKETBANK'
-OPERATOR_ACCEPTBANK = 'ACCEPTBANK'
-OPERATOR_PLATFORM = 'PLATFORM'
-
-OPERATOR_TYPE = (
-    (OPERATOR_RECEIVER, u'收款企业'),
-    (OPERATOR_PAYER, u'付款企业'),
-    (OPERATOR_TICKETBANK, u'贴现银行'),
-    (OPERATOR_ACCEPTBANK, u'承兑银行'),
-    (OPERATOR_PLATFORM, u'怡智融通'),
-)
-
-FILE_NONE = 'NONE'
-FILE_EXECUTION_AGREEMENT = 'EXECUTION_AGREEMENT'
-FILE_ENTRUST_DECLARATION = 'ENTRUST_DECLARATION'
-FILE_BILL_TICKET = 'BILL_TICKET'
-FILE_INVOICE = 'INVOICE'
-# todo list all file type here
-FILE_TYPE = (
-    (FILE_NONE, u'无附件'),
-    (FILE_EXECUTION_AGREEMENT, u'执行协议'),
-    (FILE_ENTRUST_DECLARATION, u'委托声明'),
-    (FILE_BILL_TICKET, u'汇票'),
-    (FILE_INVOICE, u'发票'),
-)
+    TransactionStatus, TRANSACTION_STATUS, TransactionCategory,
+    TRANSACTION_TYPE, OperationStatus, OPERATION_STATUS, OperationType,
+    OPERATION_TYPE, OperatorType, OPERATOR_TYPE)
 
 
 class TransactionType(models.Model):
@@ -80,7 +44,7 @@ class TransactionMetaOperation(models.Model):
     '''
     transaction_type = models.ForeignKey(TransactionType, blank=False, null=False, verbose_name=u'贴现服务类型')
     sequence = models.SmallIntegerField(max_length=5, verbose_name=u'顺序')
-    operation_type = models.CharField(max_length=30, blank=False, null=False, choices=OPERATION_TYPE, default=OPERATION_CONFIRM, verbose_name=u'操作类型')
+    operation_type = models.CharField(max_length=30, blank=False, null=False, choices=OPERATION_TYPE, default=OperationType.OPERATION_CONFIRM, verbose_name=u'操作类型')
     operator_member = models.CharField(max_length=30, blank=False, null=False, choices=OPERATOR_TYPE, verbose_name=u'执行方')
     description = models.TextField(max_length=500, blank=False, null=False, verbose_name=u'操作描述')
     file_name = models.CharField(max_length=30, blank=True, null=True, verbose_name=u'附件名称')
@@ -209,19 +173,6 @@ class TicketFormerHolder(models.Model):
         return u'[历史持票人]%s' % self.name
 
 
-OPERATION_UNACTIVATED = 'UNACTIVATED'
-OPERATION_ACTIVATED = 'ACTIVATED'
-OPERATION_PENDING = 'PENDING'
-OPERATION_FINISHED = 'FINISHED'
-
-OPERATION_STATUS = (
-    (OPERATION_UNACTIVATED, u'未激活'),
-    (OPERATION_ACTIVATED, u'进行中'),
-    (OPERATION_PENDING, u'待审核'),
-    (OPERATION_FINISHED, u'已完成'),
-)
-
-
 def get_operation_attachment_path(instance, filename):
     time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     base, ext = os.path.splitext(filename)
@@ -253,7 +204,7 @@ class TransactionOperation(models.Model):
     operator_member = models.CharField(max_length=30, choices=OPERATOR_TYPE, verbose_name=u'执行方')
     # operator_member_type = models.CharField(max_length=30, choices=MEMBER_TYPE, default=MEMBER_PLATFORM, blank=False, null=False, verbose_name=u'执行方类型')
     # operator_member_id = models.BigIntegerField(max_length=30, blank=False, null=False, verbose_name=u'执行方编号')
-    operation_type = models.CharField(max_length=30, choices=OPERATION_TYPE, default=OPERATION_CONFIRM, verbose_name=u'操作类型')
+    operation_type = models.CharField(max_length=30, choices=OPERATION_TYPE, default=OperationType.OPERATION_CONFIRM, verbose_name=u'操作类型')
     description = models.TextField(max_length=500, blank=False, null=False, verbose_name=u'操作描述')
     operator_user = models.ForeignKey(User, blank=True, null=True, verbose_name=u'执行人')
     need_upload = models.BooleanField(default=False, verbose_name=u'附件上传')
@@ -265,7 +216,7 @@ class TransactionOperation(models.Model):
     ems_number = models.CharField(max_length=30, blank=True, null=True, verbose_name=u'EMS单号')
     need_confirm = models.BooleanField(default=False, verbose_name=u'需客服确认')
     confirm_service = models.ForeignKey(Staff, blank=True, null=True, verbose_name=u'审核客服')
-    status = models.CharField(max_length=30, choices=OPERATION_STATUS, default=OPERATION_UNACTIVATED, verbose_name=u'操作状态')
+    status = models.CharField(max_length=30, choices=OPERATION_STATUS, default=OperationStatus.OPERATION_UNACTIVATED, verbose_name=u'操作状态')
     remark = models.CharField(max_length=200, blank=True, null=True, verbose_name=u'备注')
     available_time = models.DateTimeField(blank=True, null=True, editable=True, verbose_name=u'激活时间', default=None)
     finish_time = models.DateTimeField(blank=True, null=True, editable=True, verbose_name=u'完成时间', default=None)

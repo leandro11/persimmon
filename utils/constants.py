@@ -209,3 +209,48 @@ TransactionCategory = Enum({
 })
 
 TRANSACTION_TYPE = [(item[0], item[1]) for item in TransactionCategory.choices]
+
+# ======================================= Operation Status =======================================
+
+OperationStatus = Enum({
+    'OPERATION_UNACTIVATED': ('UNACTIVATED', u'未激活'),
+    'OPERATION_ACTIVATED': ('ACTIVATED', u'进行中'),
+    'OPERATION_PENDING': ('PENDING', u'待审核'),
+    'OPERATION_FINISHED': ('FINISHED', u'已完成'),
+})
+
+OPERATION_STATUS = [(item[0], item[1]) for item in OperationStatus.choices]
+
+# ======================================= Operation Type =======================================
+
+OperationType = Enum({
+    'OPERATION_UPLOAD': ('UPLOAD', u'上传'),
+    'OPERATION_CONFIRM': ('CONFIRM', u'确认'),
+    'OPERATION_EMS': ('EMS', u'邮寄')
+})
+
+OPERATION_TYPE = [(item[0], item[1]) for item in OperationType.choices]
+
+# ======================================= Operator Type =======================================
+
+OperatorType = Enum({
+    'OPERATOR_RECEIVER': ('RECEIVER', u'收款企业'),
+    'OPERATOR_PAYER': ('PAYER', u'付款企业'),
+    'OPERATOR_TICKETBANK': ('TICKETBANK', u'贴现银行'),
+    'OPERATOR_ACCEPTBANK': ('ACCEPTBANK', u'承兑银行'),
+    'OPERATOR_PLATFORM': ('PLATFORM', u'怡智融通'),
+})
+
+OPERATOR_TYPE = [(item[0], item[1]) for item in OperatorType.choices]
+
+# ======================================= File Type =======================================
+
+FileType = Enum({
+    'FILE_NONE': ('NONE', u'无附件'),
+    'FILE_EXECUTION_AGREEMENT': ('EXECUTION_AGREEMENT', u'执行协议'),
+    'FILE_EXECUTION_AGREEMENT': ('ENTRUST_DECLARATION', u'委托声明'),
+    'FILE_BILL_TICKET': ('BILL_TICKET', u'汇票'),
+    'FILE_INVOICE': ('INVOICE', u'发票'),
+})
+
+FILE_TYPE = [(item[0], item[1]) for item in FileType.choices]

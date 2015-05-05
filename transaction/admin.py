@@ -36,7 +36,9 @@ from management.sites import site as management_site
 from transaction.models import *
 from utils.constants import (
     MemberUserType, MEMBER_USER_TYPE, TransactionClaimStatus,
-    CLAIM_STATUS, TransactionStatus, InvoiceStatus, TicketStatus, MemberType)
+    CLAIM_STATUS, TransactionStatus, InvoiceStatus, TicketStatus,
+    MemberType, OperationStatus, OPERATION_STATUS, OperationType,
+    OPERATION_TYPE, OperatorType, OPERATOR_TYPE)
 from utils.user import group_check, get_group, get_user_profile
 
 reload(sys)
@@ -458,7 +460,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         else:
             operation_list = TransactionOperation.objects.filter(transaction_id=order.id).all()
             for op in operation_list:
-                if op.status != OPERATION_FINISHED:
+                if op.status != OperationStatus.OPERATION_FINISHED:
                     info = u'该贴现服务尚有流程操作未完成，<a href="/transaction/transactionorder/%s">点击返回</a>' % order.id
                     break
         if info:
@@ -757,66 +759,80 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
         if order.status == TransactionStatus.TRANSACTION_PROCESSING:
             self.inlines = [TicketFormerHolderReadonlyInline]
-            self.exclude = ['transaction_claim', 'finish_time', 'invoice', 'ticket']
-            self.readonly_fields = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'status',
-                                    'create_time', 'invoice_status', 'ticket_status']
+            self.exclude = [
+                'transaction_claim', 'finish_time', 'invoice', 'ticket'
+            ]
+            self.readonly_fields = [
+                'ticket_number', 'receivable_enterprise', 'pay_enterprise',
+                'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'status',
+                'create_time', 'invoice_status', 'ticket_status'
+            ]
         elif order.status == TransactionStatus.TRANSACTION_DONE:
             self.inlines = [TicketFormerHolderReadonlyInline]
             self.exclude = ['transaction_claim', ]
-            self.readonly_fields = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'status',
-                                    'create_time', 'finish_time', 'invoice_status', 'ticket_status']
+            self.readonly_fields = [
+                'ticket_number', 'receivable_enterprise', 'pay_enterprise',
+                'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'status',
+                'create_time', 'finish_time', 'invoice_status', 'ticket_status'
+            ]
 
         if group_type in (MemberUserType.ENTERPRISE_CONTACTOR, MemberUserType.ENTERPRISE_OPERATOR):
             self.change_form_template = 'member/order_change_form_for_service.html'
             if user_profile.enterprise.id == order.receivable_enterprise.id:
-                user_role = OPERATOR_RECEIVER
+                user_role = OperatorType.OPERATOR_RECEIVER
             elif user_profile.enterprise.id == order.pay_enterprise.id:
-                user_role = OPERATOR_PAYER
+                user_role = OperatorType.OPERATOR_PAYER
         elif group_type in (MemberUserType.BANK_CONTACTOR, MemberUserType.BANK_OPERATOR):
             self.change_form_template = 'member/order_change_form_for_service.html'
             if user_profile.bank.id == order.ticket_bank.id:
-                user_role = OPERATOR_TICKETBANK
+                user_role = OperatorType.OPERATOR_TICKETBANK
             elif user_profile.bank.id == order.accept_bank.id:
-                user_role = OPERATOR_ACCEPTBANK
+                user_role = OperatorType.OPERATOR_ACCEPTBANK
         elif group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_SERVICE):
             self.change_form_template = 'management/order_change_form_for_service.html'
-            user_role = OPERATOR_PLATFORM
+            user_role = OperatorType.OPERATOR_PLATFORM
         elif group_type in (StaffType.SERVICE_MANAGER, StaffType.ZONE_SERVICE):
             self.change_form_template = 'management/order_change_form_for_service.html'
-            user_role = OPERATOR_PLATFORM
+            user_role = OperatorType.OPERATOR_PLATFORM
         elif group_type == StaffType.ACCOUNTANT:
             self.inlines = []
             self.change_form_template = None
-            return super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
+            return super(TransactionOrderAdmin, self).change_view(request,
+                                                                  object_id,
+                                                                  form_url,
+                                                                  extra_context)
         elif group_type in (StaffType.TICKET_DIRECTOR, StaffType.TICKET_CONDUCTOR):
             self.inlines = []
             self.change_form_template = None
-            return super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
+            return super(TransactionOrderAdmin, self).change_view(request,
+                                                                  object_id,
+                                                                  form_url,
+                                                                  extra_context)
         else:
             raise PermissionDenied
 
         operation_list = TransactionOperation.objects.filter(transaction_id=order.id).all()
         operation_alldone = True  # 贴现操作是否全部完成
         for op in operation_list:
-            if op.status != OPERATION_FINISHED:
+            if op.status != OperationStatus.OPERATION_FINISHED:
                 operation_alldone = False
                 break
         extra_context = dict(operation_list=operation_list,
                              title=u'查看贴现服务',
-                             OPERATION_UNACTIVATED=OPERATION_UNACTIVATED,
-                             OPERATION_ACTIVATED=OPERATION_ACTIVATED,
-                             OPERATION_PENDING=OPERATION_PENDING,
-                             OPERATION_FINISHED=OPERATION_FINISHED,
+                             OPERATION_UNACTIVATED=OperationStatus.OPERATION_UNACTIVATED,
+                             OPERATION_ACTIVATED=OperationStatus.OPERATION_ACTIVATED,
+                             OPERATION_PENDING=OperationStatus.OPERATION_PENDING,
+                             OPERATION_FINISHED=OperationStatus.OPERATION_FINISHED,
 
                              MEMBER_BANK=MemberType.MEMBER_BANK,
                              MEMBER_ENTERPRISE=MemberType.MEMBER_ENTERPRISE,
                              MEMBER_PLATFORM=MemberType.MEMBER_PLATFORM,
 
-                             OPERATOR_RECEIVER=OPERATOR_RECEIVER,
-                             OPERATOR_PAYER=OPERATOR_PAYER,
-                             OPERATOR_TICKETBANK=OPERATOR_TICKETBANK,
-                             OPERATOR_ACCEPTBANK=OPERATOR_ACCEPTBANK,
-                             OPERATOR_PLATFORM=OPERATOR_PLATFORM,
+                             OPERATOR_RECEIVER=OperatorType.OPERATOR_RECEIVER,
+                             OPERATOR_PAYER=OperatorType.OPERATOR_PAYER,
+                             OPERATOR_TICKETBANK=OperatorType.OPERATOR_TICKETBANK,
+                             OPERATOR_ACCEPTBANK=OperatorType.OPERATOR_ACCEPTBANK,
+                             OPERATOR_PLATFORM=OperatorType.OPERATOR_PLATFORM,
 
                              INVOICE_FINISHED=InvoiceStatus.INVOICE_FINISHED,
                              TICKET_CHECKOUT=TicketStatus.TICKET_CHECKOUT,
@@ -876,14 +892,14 @@ class TransactionOperationAdmin(admin.ModelAdmin):
         group_name = None if user_profile is None else user_profile.groupname
 
         # check for user permission
-        if member_type == OPERATOR_PLATFORM:
+        if member_type == OperatorType.OPERATOR_PLATFORM:
             if not group_name == SERVICE_MANAGER and not group_name == ZONE_SERVICE:
                 return HttpResponseNotFound(u'仅客服及客服经理能执行此操作')
         else:
-            if member_type == OPERATOR_RECEIVER or member_type == OPERATOR_PAYER:
+            if member_type == OperatorType.OPERATOR_RECEIVER or member_type == OperatorType.OPERATOR_PAYER:
                 if not hasattr(user_profile, 'enterprise') or not user_profile.enterprise.id == member_id:
                     return HttpResponseNotFound(u'你无权对该企业会员的贴现操作进行修改')
-            elif member_type == OPERATOR_TICKETBANK or member_type == OPERATOR_ACCEPTBANK:
+            elif member_type == OperatorType.OPERATOR_TICKETBANK or member_type == OperatorType.OPERATOR_ACCEPTBANK:
                 member = Bank.objects.get(pk=member_id)
                 if not hasattr(user_profile, 'bank') or not user_profile.bank.id == member_id:
                     return HttpResponseNotFound(u'你无权对该银行会员的贴现操作进行修改')
@@ -903,9 +919,9 @@ class TransactionOperationAdmin(admin.ModelAdmin):
             operation.upload_file = upload_file
 
         if operation.need_confirm:
-            operation.status = OPERATION_PENDING
+            operation.status = OperationStatus.OPERATION_PENDING
         else:
-            operation.status = OPERATION_FINISHED
+            operation.status = OperationStatus.OPERATION_FINISHED
             # 自动激活下一个贴现操作
             operation_list = TransactionOperation.objects.filter(transaction_id=operation.transaction_id).order_by('sequence').all()
             for i in range(operation_list.count()):
@@ -931,10 +947,10 @@ class TransactionOperationAdmin(admin.ModelAdmin):
             return HttpResponseNotFound(u'仅客服及客服经理能执行此操作')
 
         operation = TransactionOperation.objects.get(pk=object_id)
-        if not operation.status == OPERATION_PENDING:
+        if not operation.status == OperationStatus.OPERATION_PENDING:
             return HttpResponseNotFound(u'贴现流程状态必须是待审核')
 
-        operation.status = OPERATION_FINISHED
+        operation.status = OperationStatus.OPERATION_FINISHED
         operation.confirm_service = user_profile
         # operation.finish_time = datetime.datetime.now()
         # todo 审核时间
