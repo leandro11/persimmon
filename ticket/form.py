@@ -1,18 +1,18 @@
-__author__ = 'Lorne'
 #coding=utf-8
 
 from django.utils.deconstruct import deconstructible
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.contrib import admin
-from ticket.models import *
-from member.models import Bank, Enterprise
 from django.forms import ModelForm
 from django import forms
 from django.db.models import Q
-from utils.constants import *
 from django.contrib.auth.models import User, Group
 from django.forms.models import BaseInlineFormSet
+
+from ticket.models import *
+from utils.constants import *
+from member.models import Bank, Enterprise
 
 
 class InvoiceAddInlineFormset(BaseInlineFormSet):
@@ -69,8 +69,8 @@ class InvoiceAddForm(forms.ModelForm):
         fee = kwargs.pop('fee') if 'fee' in kwargs else None
         super(InvoiceAddForm, self).__init__(*args, **kwargs)
         # 限制开票经理的选项只有区域市场经理和市场部总经理
-        mm = Group.objects.get(name=MARKET_MANAGER)
-        zm = Group.objects.get(name=ZONE_MARKET)
+        mm = Group.objects.get(id=StaffType.MARKET_MANAGER)
+        zm = Group.objects.get(id=StaffType.ZONE_MARKET)
         # staffs = Staff.objects.filter(user__groups__in=[zm, mm]).all()
         self.fields['market_manager'].queryset = Staff.objects.filter(user__groups__in=[zm, mm])
         self.fields['amount'].initial = fee

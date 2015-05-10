@@ -57,7 +57,7 @@ class Invoice(models.Model):
         elif self.status == InvoiceStatus.INVOICE_LODGED:
             # invoice = Invoice.objects.get(transaction_id=obj.id)
             return u'<a class="button" href="/staff/ticket/invoice/%s/send"><strong>发票寄出</strong></a>' % self.id
-        elif self.status == INVOICE_FINISHED:
+        elif self.status == InvoiceStatus.INVOICE_FINISHED:
             # invoice = Invoice.objects.get(transaction_id=obj.id)
             # return u'<a href="/staff/ticket/invoice/%s"><strong>已寄出</strong></a>' % invoice.id
             return u'已寄出'
@@ -207,7 +207,7 @@ class TransactionTicket(models.Model):
               self.status == TicketStatus.TICKET_RECEIVED or
               self.status == TicketStatus.TICKET_CHECKIN_PENDING):
             return u''
-        elif self.status == TICKET_CHECKIN:
+        elif self.status == TicketStatus.TICKET_CHECKIN:
             return u'<a class="button" href="/staff/ticket/transactionticket/?checkout_pending=%s"><strong>执行出库</strong></a>' % self.id
         else:
             return u'出库完成'
@@ -222,9 +222,9 @@ class TransactionTicket(models.Model):
             self.status == TicketStatus.TICKET_RECEIVED or
             self.status == TicketStatus.TICKET_CHECKIN_PENDING):
             return u''
-        elif self.status == TICKET_CHECKIN:
+        elif self.status == TicketStatus.TICKET_CHECKIN:
             return u'等待出库'
-        elif self.status == TICKET_CHECKOUT_PENDING:
+        elif self.status == TicketStatus.TICKET_CHECKOUT_PENDING:
             return u'<a class="button" href="/staff/ticket/transactionticket/?checkout_confirm=%s"><strong>确认出库</strong></a>' % self.id
         else:
             return u'出库完成'

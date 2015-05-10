@@ -4,6 +4,7 @@ from django import template
 
 from utils.user import group_check, get_group, get_user_profile
 from transaction.models import *
+from utils.constants import OperationStatus, OperatorType
 
 register = template.Library()
 
@@ -74,14 +75,14 @@ def get_processing_operation(order):
     res = u''
     operation_list = TransactionOperation.objects.filter(transaction=order).order_by('sequence').all()
     for op in operation_list:
-        if op.status == OPERATION_ACTIVATED or op.status == OPERATION_PENDING:
-            if op.operator_member == OPERATOR_RECEIVER:
+        if op.status in [OperationStatus.OPERATION_ACTIVATED, OperationStatus.OPERATION_PENDING]:
+            if op.operator_member == OperatorType.OPERATOR_RECEIVER:
                 member_name = Enterprise.objects.get(id=op.transaction.receivable_enterprise_id).name
-            elif op.operator_member == OPERATOR_PAYER:
+            elif op.operator_member == OperatorType.OPERATOR_PAYER:
                 member_name = Enterprise.objects.get(id=op.transaction.pay_enterprise_id).name
-            elif op.operator_member == OPERATOR_TICKETBANK:
+            elif op.operator_member == OperatorType.OPERATOR_TICKETBANK:
                 member_name = Bank.objects.get(id=op.transaction.ticket_bank_id).short_name
-            elif op.operator_member == OPERATOR_ACCEPTBANK:
+            elif op.operator_member == OperatorType.OPERATOR_ACCEPTBANK:
                 member_name = Bank.objects.get(id=op.transaction.accept_bank_id).short_name
             else:
                 member_name = u'怡智融通'
