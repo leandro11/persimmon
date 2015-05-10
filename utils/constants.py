@@ -248,7 +248,7 @@ OPERATOR_TYPE = [(item[0], item[1]) for item in OperatorType.choices]
 FileType = Enum({
     'FILE_NONE': ('NONE', u'无附件'),
     'FILE_EXECUTION_AGREEMENT': ('EXECUTION_AGREEMENT', u'执行协议'),
-    'FILE_EXECUTION_AGREEMENT': ('ENTRUST_DECLARATION', u'委托声明'),
+    'FILE_ENTRUST_DECLARATION': ('ENTRUST_DECLARATION', u'委托声明'),
     'FILE_BILL_TICKET': ('BILL_TICKET', u'汇票'),
     'FILE_INVOICE': ('INVOICE', u'发票'),
 })

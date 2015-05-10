@@ -277,7 +277,10 @@ class TransactionClaimAdmin(admin.ModelAdmin):
         self.form = TransactionClaimConfirmForm
         if request.user.is_superuser:
             # todo 更改操作成功后的返回页面
-            return super(TransactionClaimAdmin, self).change_view(request, object_id, form_url, extra_context)
+            return super(TransactionClaimAdmin, self).change_view(request,
+                                                                  object_id,
+                                                                  form_url,
+                                                                  extra_context)
 
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
@@ -353,7 +356,7 @@ class TransactionClaimAdmin(admin.ModelAdmin):
 
                     # active first operation
                     if is_first:
-                        operation.status = OPERATION_ACTIVATED
+                        operation.status = OperationStatus.OPERATION_ACTIVATED
                         is_first = False
                     operation.save()
             form.instance.status = TransactionClaimStatus.CLAIM_PASSED
