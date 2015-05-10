@@ -482,7 +482,6 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                                                               form_url,
                                                               extra_context)
 
-
     @transaction.atomic
     def add_invoice(self, request, object_id, form_url='', extra_context=None):
         invoices = Invoice.objects.filter(transaction_id=long(object_id))
