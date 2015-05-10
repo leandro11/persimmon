@@ -531,17 +531,20 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         invoices = Invoice.objects.filter(transaction_id=long(object_id))
         if invoices.count() < 1:
             return HttpResponseNotFound(u'<h1>该贴现服务尚未开具发票</h1>')
-        elif invoices[0].status == INVOICE_FINISHED:
+        elif invoices[0].status == InvoiceStatus.INVOICE_FINISHED:
             return HttpResponseNotFound(u'<h1>该贴现服务的发票已经寄出</h1>')
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if request.user.is_superuser or group_name == ACCOUNTANT:
+        if request.user.is_superuser or group_type == StaffType.ACCOUNTANT:
             self.inlines = [InvoiceEditInline]
             self.exclude = ['transaction_claim', 'finish_time', 'invoice', 'ticket']
-            self.readonly_fields = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'invoice_status',
-                                    'ticket_status', 'status', 'create_time']
+            self.readonly_fields = [
+                'ticket_number', 'receivable_enterprise', 'pay_enterprise',
+                'ticket_bank', 'accept_bank', 'amount', 'type', 'fee',
+                'invoice_status', 'ticket_status', 'status', 'create_time'
+            ]
             extra_context = dict(title=u'贴现开具发票', )
         else:
             raise PermissionDenied
@@ -559,8 +562,11 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
         self.inlines = [TicketAddInline]
         self.exclude = ['transaction_claim', 'finish_time', 'invoice', 'ticket']
-        self.readonly_fields = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'invoice_status',
-                                'ticket_status', 'status', 'create_time']
+        self.readonly_fields = [
+            'ticket_number', 'receivable_enterprise', 'pay_enterprise',
+            'ticket_bank', 'accept_bank', 'amount', 'type', 'fee',
+            'invoice_status', 'ticket_status', 'status', 'create_time'
+        ]
         extra_context = dict(title=u'贴现汇票入库', )
 
         user_profile = get_user_profile(request.user)
@@ -572,7 +578,10 @@ class TransactionOrderAdmin(admin.ModelAdmin):
             raise PermissionDenied
 
         if request.method == 'POST':
-            result = super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
+            result = super(TransactionOrderAdmin, self).change_view(request,
+                                                                    object_id,
+                                                                    form_url,
+                                                                    extra_context)
             # 添加成功才会返回HttpResponseRedirect，验证失败返回TemplateResponse
             if isinstance(result, HttpResponseRedirect):
                 # 重置对用户的提醒信息
@@ -581,7 +590,10 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                 ticket = TransactionTicket.objects.get(transaction_id=long(object_id))
                 return HttpResponseRedirect('/admin/ticket/transactionticket/%s/' % ticket.id)
 
-        return super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
+        return super(TransactionOrderAdmin, self).change_view(request,
+                                                              object_id,
+                                                              form_url,
+                                                              extra_context)
 
     def save_related(self, request, form, formsets, change):
         super(TransactionOrderAdmin, self).save_related(request, form, formsets, change)
@@ -653,10 +665,12 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         if group_type in MemberUserType.values:
             # self.list_display = ('ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'status')
             self.list_filter = ['status', ]
-            self.list_display = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'fee', 'invoice_status', 'ticket_status',
-                                 'create_time']
+            self.list_display = [
+                'ticket_number', 'receivable_enterprise', 'pay_enterprise',
+                'ticket_bank', 'accept_bank', 'amount', 'fee', 'invoice_status',
+                'ticket_status', 'create_time'
+            ]
             self.change_list_template = 'member/history_order_change_list.html'
-
 
             # todo restrict queryset 找出该单位参与的
         elif group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_SERVICE, StaffType.SERVICE_MANAGER, StaffType.ZONE_SERVICE, StaffType.TOP_MANAGER):
@@ -664,17 +678,26 @@ class TransactionOrderAdmin(admin.ModelAdmin):
             self.change_list_template = 'management/change_list.html'
 
             self.list_filter = ['status', ]
-            self.list_display = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'fee', 'invoice_status', 'ticket_status',
-                                 'create_time']
+            self.list_display = [
+                'ticket_number', 'receivable_enterprise', 'pay_enterprise',
+                'ticket_bank', 'accept_bank', 'amount', 'fee', 'invoice_status',
+                'ticket_status', 'create_time'
+            ]
         elif group_type == StaffType.ACCOUNTANT:
             self.list_filter = ['invoice_status', ]
-            self.list_display = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'amount', 'fee', 'invoice_status', 'ticket_status', 'create_time',
-                                 'add_invoice_link']
+            self.list_display = [
+                'ticket_number', 'receivable_enterprise', 'pay_enterprise',
+                'amount', 'fee', 'invoice_status', 'ticket_status',
+                'create_time', 'add_invoice_link'
+            ]
 
         elif group_type in (StaffType.TICKET_DIRECTOR, StaffType.TICKET_CONDUCTOR):
             self.list_filter = ['ticket_status', ]
-            self.list_display = ['ticket_number', 'payee_enterprise', 'payer_enterprise', 'ticket_bank_name', 'accept_bank_name', 'amount', 'fee', 'invoice_status',
-                                 'ticket_status', 'create_time', 'add_ticket_link']
+            self.list_display = [
+                'ticket_number', 'payee_enterprise', 'payer_enterprise',
+                'ticket_bank_name', 'accept_bank_name', 'amount', 'fee',
+                'invoice_status', 'ticket_status', 'create_time', 'add_ticket_link'
+            ]
         else:
             raise PermissionDenied
 
@@ -699,7 +722,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
     # =============================================== TICKET LINK =====================================================
     def add_ticket_link(self, obj):
         # return u'<a class="button" href="/admin/transaction/transactionorder/%s/add_ticket"><strong>收票</strong></a>' % obj.id
-        if obj.ticket_status == TICKET_UNRECEIVED:
+        if obj.ticket_status == TicketStatus.TICKET_UNRECEIVED:
             return u'<a class="button" href="/admin/transaction/transactionorder/%s/add_ticket"><strong>收票</strong></a>' % obj.id
         else:
             return u'已收票'
@@ -733,7 +756,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
     # =============================================== INVOICE LINK =====================================================
     def add_invoice_link(self, obj):
-        if obj.invoice_status == INVOICE_UNLODGED:
+        if obj.invoice_status == InvoiceStatus.INVOICE_UNLODGED:
             return u'<a class="button" href="/admin/transaction/transactionorder/%s/add_invoice"><strong>发票开具</strong></a>' % obj.id
         else:
             return u'已开票'
@@ -742,14 +765,14 @@ class TransactionOrderAdmin(admin.ModelAdmin):
     add_invoice_link.short_description = u'发票开具'
 
     def send_invoice_link(self, obj):
-        if obj.invoice_status == INVOICE_UNLODGED:
+        if obj.invoice_status == InvoiceStatus.INVOICE_UNLODGED:
             return u''
-        elif obj.invoice_status == INVOICE_LODGED:
+        elif obj.invoice_status == InvoiceStatus.INVOICE_LODGED:
             # invoice = Invoice.objects.get(transaction_id=obj.id)
             return u'<a class="button" href="/admin/transaction/transactionorder/%s/send_invoice"><strong>发票寄出</strong></a>' % obj.id
-        elif obj.invoice_status == INVOICE_ABORT:
+        elif obj.invoice_status == InvoiceStatus.INVOICE_ABORT:
             return u'已作废'
-        elif obj.invoice_status == INVOICE_FINISHED:
+        elif obj.invoice_status == InvoiceStatus.INVOICE_FINISHED:
             invoice = Invoice.objects.get(transaction_id=obj.id)
             return u'<a href="/admin/ticket/invoice/%s"><strong>已寄出</strong></a>' % invoice.id
 
@@ -945,7 +968,7 @@ class TransactionOperationAdmin(admin.ModelAdmin):
                 if operation.id == operation_list[i].id:
                     if i + 1 < operation_list.count():
                         op = operation_list[i + 1]
-                        op.status = OPERATION_ACTIVATED
+                        op.status = OperationStatus.OPERATION_ACTIVATED
                         op.save()
                         break
 
