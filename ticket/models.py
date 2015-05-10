@@ -57,7 +57,7 @@ class Invoice(models.Model):
         elif self.status == InvoiceStatus.INVOICE_LODGED:
             # invoice = Invoice.objects.get(transaction_id=obj.id)
             return u'<a class="button" href="/staff/ticket/invoice/%s/send"><strong>发票寄出</strong></a>' % self.id
-        elif self.status == INVOICE_FINISHED:
+        elif self.status == InvoiceStatus.INVOICE_FINISHED:
             # invoice = Invoice.objects.get(transaction_id=obj.id)
             # return u'<a href="/staff/ticket/invoice/%s"><strong>已寄出</strong></a>' % invoice.id
             return u'已寄出'

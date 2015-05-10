@@ -441,12 +441,15 @@ class TransactionOrderAdmin(admin.ModelAdmin):
     @transaction.atomic
     def finish_view(self, request, object_id, form_url='', extra_context=None):
         if not request.method == 'POST':
-            return super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
+            return super(TransactionOrderAdmin, self).change_view(request,
+                                                                  object_id,
+                                                                  form_url,
+                                                                  extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if not group_name == ZONE_SERVICE and not group_name == SERVICE_MANAGER and not group_name == TOP_MANAGER:
+        if not group_type in (StaffType.ZONE_SERVICE, StaffType.SERVICE_MANAGER, StaffType.TOP_MANAGER):
             return render_to_response("management/notify.html", {
                 "info": u'仅有客服部总经理、区域客服、总经理有权限执行此操作',
                 "title": u'没有权限完成贴现',
@@ -455,7 +458,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
         order = TransactionOrder.objects.get(id=object_id)
         info = u''
-        if not order.invoice_status == INVOICE_FINISHED or not order.ticket_status == TICKET_CHECKOUT:
+        if not order.invoice_status == InvoiceStatus.INVOICE_FINISHED or not order.ticket_status == TicketStatus.TICKET_CHECKOUT:
             info = u'该贴现服务尚有发票或汇票状态未完成，<a href="/transaction/transactionorder/%s">点击返回</a>' % order.id
         else:
             operation_list = TransactionOperation.objects.filter(transaction_id=order.id).all()
@@ -474,7 +477,10 @@ class TransactionOrderAdmin(admin.ModelAdmin):
             order.finish_time = datetime.datetime.now()
             order.save()
 
-        return super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
+        return super(TransactionOrderAdmin, self).change_view(request,
+                                                              object_id,
+                                                              form_url,
+                                                              extra_context)
 
 
     @transaction.atomic
@@ -488,19 +494,25 @@ class TransactionOrderAdmin(admin.ModelAdmin):
             })
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if request.user.is_superuser or group_name == ACCOUNTANT:
+        if request.user.is_superuser or group_type == StaffType.ACCOUNTANT:
             self.inlines = [InvoiceAddInline]
             self.exclude = ['transaction_claim', 'finish_time', 'invoice', 'ticket']
-            self.readonly_fields = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'invoice_status',
-                                    'ticket_status', 'status', 'create_time']
+            self.readonly_fields = [
+                'ticket_number', 'receivable_enterprise', 'pay_enterprise',
+                'ticket_bank', 'accept_bank', 'amount', 'type', 'fee',
+                'invoice_status', 'ticket_status', 'status', 'create_time'
+            ]
             extra_context = dict(title=u'贴现开具发票', )
         else:
             raise PermissionDenied
 
         if request.method == 'POST':
-            result = super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
+            result = super(TransactionOrderAdmin, self).change_view(request,
+                                                                    object_id,
+                                                                    form_url,
+                                                                    extra_context)
             # 添加成功才会返回HttpResponseRedirect，验证失败返回TemplateResponse
             if isinstance(result, HttpResponseRedirect):
                 # 重置对用户的提醒信息
@@ -586,7 +598,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                         invoice_log.invoice_id = inline_form.instance.id
                         # invoices = Invoice.objects.filter(pk=inline_form.instance.id)
                         # invoice_log.before_status = invoices[0].status if invoices.count() > 0 else None
-                        invoice_log.before_status = INVOICE_UNLODGED
+                        invoice_log.before_status = InvoiceStatus.INVOICE_UNLODGED
                         invoice_log.after_status = inline_form.instance.status
                         invoice_log.operator = user_profile
                         invoice_log.remarks = u'开具发票，发票号：%s' % inline_form.instance.number

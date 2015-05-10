@@ -41,75 +41,93 @@ class InvoiceAdmin(admin.ModelAdmin):
         '''
         寄出发票
         '''
-        if Invoice.objects.get(pk=long(object_id)).status == INVOICE_FINISHED:
+        if Invoice.objects.get(pk=long(object_id)).status == InvoiceStatus.INVOICE_FINISHED:
             return HttpResponseNotFound(u'<h1>该贴现服务的发票已经寄出</h1>')
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         if request.user.is_superuser:
             self.exclude = []
             self.readonly_fields = []
-        elif group_name in (ACCOUNTANT, TOP_MANAGER):
+        elif group_type in (StaffType.ACCOUNTANT, StaffType.TOP_MANAGER):
             self.exclude = ['finish_time', ]
-            self.readonly_fields = ['number', 'amount', 'transaction', 'market_manager', 'status', 'create_time']
-            # self.inlines = [InvoiceEditInline]
-            # self.exclude = ['transaction_claim', 'finish_time', 'invoice', 'ticket']
-            # self.readonly_fields = ['ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'invoice_status',
-            #                         'ticket_status', 'status', 'create_time']
+            self.readonly_fields = [
+                'number', 'amount', 'transaction',
+                'market_manager', 'status', 'create_time'
+            ]
             extra_context = dict(title=u'贴现发票寄出', )
         else:
             raise PermissionDenied
 
         if request.method == 'POST':
-            # if not obj.send_ems:
-            #     return HttpResponseNotFound(u'<h1>ems单号不能为空</h1>')
-            # todo 检查ems单号不能为空
             pass
         self.change_form_template = 'management/change_form.html'
-        return super(InvoiceAdmin, self).change_view(request, object_id, form_url, extra_context)
+        return super(InvoiceAdmin, self).change_view(request,
+                                                     object_id,
+                                                     form_url,
+                                                     extra_context)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         invoice = Invoice.objects.get(pk=long(object_id))
-        if invoice.status == INVOICE_FINISHED:
-            self.readonly_fields = ['transaction', 'number', 'amount', 'market_manager', 'send_ems', 'status', 'create_time', 'finish_time']
+        if invoice.status == InvoiceStatus.INVOICE_FINISHED:
+            self.readonly_fields = [
+                'transaction', 'number', 'amount', 'market_manager',
+                'send_ems', 'status', 'create_time', 'finish_time'
+            ]
             self.exclude = []
         else:
-            self.readonly_fields = ['transaction', 'number', 'amount', 'market_manager', 'send_ems', 'status', 'create_time']
+            self.readonly_fields = [
+                'transaction', 'number', 'amount', 'market_manager',
+                'send_ems', 'status', 'create_time'
+            ]
             self.exclude = ['finish_time']
         self.inlines = [InvoiceLogInline, ]
-        return super(InvoiceAdmin, self).change_view(request, object_id, form_url, extra_context)
+        return super(InvoiceAdmin, self).change_view(request,
+                                                     object_id,
+                                                     form_url,
+                                                     extra_context)
 
     @csrf_protect_m
     def changelist_view(self, request, extra_context=None):
         if request.user.is_superuser:
             self.list_filter = ['status', ]
-            self.list_display = ['number', 'amount', 'transaction_link', 'market_manager_link', 'send_ems', 'create_time', 'send_invoice_link']
+            self.list_display = [
+                'number', 'amount', 'transaction_link', 'market_manager_link',
+                'send_ems', 'create_time', 'send_invoice_link'
+            ]
             return super(InvoiceAdmin, self).changelist_view(request, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name == ACCOUNTANT:
+        if group_type == StaffType.ACCOUNTANT:
             self.list_filter = ['status', ]
-            self.list_display = ['number', 'amount', 'transaction_link', 'market_manager_link', 'send_ems', 'create_time', 'send_invoice_link']
-        elif group_name == TOP_MANAGER:
+            self.list_display = [
+                'number', 'amount', 'transaction_link', 'market_manager_link',
+                'send_ems', 'create_time', 'send_invoice_link'
+            ]
+        elif group_type == StaffType.TOP_MANAGER:
             self.list_filter = ['status', ]
-            self.list_display = ['number', 'amount', 'transaction_link', 'market_manager_link', 'send_ems', 'create_time', 'send_invoice_link']
+            self.list_display = [
+                'number', 'amount', 'transaction_link', 'market_manager_link',
+                'send_ems', 'create_time', 'send_invoice_link'
+            ]
         else:
             raise PermissionDenied
+
         return super(InvoiceAdmin, self).changelist_view(request, extra_context)
 
 
     def save_model(self, request, obj, form, change):
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
-        if request.path.find('/send') > 0 and group_name == ACCOUNTANT:
-            obj.status = INVOICE_FINISHED
+        group_type = None if user_profile is None else user_profile.grouptype
+        if request.path.find('/send') > 0 and group_type == StaffType.ACCOUNTANT:
+            obj.status = InvoiceStatus.INVOICE_FINISHED
             invoice_log = InvoiceLog()
             invoice_log.invoice_id = obj.id
             invoice_log.before_status = Invoice.objects.get(pk=obj.id).status
-            invoice_log.after_status = INVOICE_FINISHED
+            invoice_log.after_status = InvoiceStatus.INVOICE_FINISHED
             invoice_log.operator = user_profile
             invoice_log.remarks = u'寄出发票，EMS单号：：%s' % obj.send_ems
             invoice_log.save()
