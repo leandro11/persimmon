@@ -207,7 +207,7 @@ class TransactionTicket(models.Model):
               self.status == TicketStatus.TICKET_RECEIVED or
               self.status == TicketStatus.TICKET_CHECKIN_PENDING):
             return u''
-        elif self.status == TICKET_CHECKIN:
+        elif self.status == TicketStatus.TICKET_CHECKIN:
             return u'<a class="button" href="/staff/ticket/transactionticket/?checkout_pending=%s"><strong>执行出库</strong></a>' % self.id
         else:
             return u'出库完成'
@@ -222,9 +222,9 @@ class TransactionTicket(models.Model):
             self.status == TicketStatus.TICKET_RECEIVED or
             self.status == TicketStatus.TICKET_CHECKIN_PENDING):
             return u''
-        elif self.status == TICKET_CHECKIN:
+        elif self.status == TicketStatus.TICKET_CHECKIN:
             return u'等待出库'
-        elif self.status == TICKET_CHECKOUT_PENDING:
+        elif self.status == TicketStatus.TICKET_CHECKOUT_PENDING:
             return u'<a class="button" href="/staff/ticket/transactionticket/?checkout_confirm=%s"><strong>确认出库</strong></a>' % self.id
         else:
             return u'出库完成'

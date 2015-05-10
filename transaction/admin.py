@@ -552,9 +552,9 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         extra_context = dict(title=u'贴现汇票入库', )
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if request.user.is_superuser or group_name == TICKET_CONDUCTOR or group_name == TICKET_DIRECTOR:
+        if request.user.is_superuser or group_type in (StaffType.TICKET_CONDUCTOR, StaffType.TICKET_DIRECTOR):
             pass
         else:
             raise PermissionDenied
@@ -575,9 +575,9 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         super(TransactionOrderAdmin, self).save_related(request, form, formsets, change)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
         # 增加发票时记录 invoicelog
-        if request.path.find('/add_invoice') > 0 and group_name == ACCOUNTANT:
+        if request.path.find('/add_invoice') > 0 and group_type == StaffType.ACCOUNTANT:
             for formset in formsets:
                 if formset.form.Meta.model is Invoice:
                     for inline_form in formset.forms:
@@ -592,31 +592,33 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                         invoice_log.remarks = u'开具发票，发票号：%s' % inline_form.instance.number
                         invoice_log.save()
                 formset.save()
-        elif request.path.find('/send_invoice') > 0 and group_name == ACCOUNTANT:
+        elif request.path.find('/send_invoice') > 0 and group_type == StaffType.ACCOUNTANT:
             # 寄出发票时记录 invoicelog
             for formset in formsets:
                 if formset.form.Meta.model is Invoice:
                     for inline_form in formset.forms:
-                        inline_form.instance.status = INVOICE_FINISHED
+                        inline_form.instance.status = InvoiceStatus.INVOICE_FINISHED
                         invoice_log = InvoiceLog()
                         invoice_log.invoice_id = inline_form.instance.id
                         invoices = Invoice.objects.filter(pk=inline_form.instance.id)
                         invoice_log.before_status = invoices[0].status if invoices.count() > 0 else None
-                        invoice_log.after_status = INVOICE_FINISHED
+                        invoice_log.after_status = InvoiceStatus.INVOICE_FINISHED
                         invoice_log.instance.operator = user_profile
                         invoice_log.remarks = u'寄出发票，EMS单号：%s' % inline_form.instance.send_ems
                         invoice_log.save()
                 formset.save()
-        elif request.path.find('/add_ticket') > 0 and (group_name == TICKET_CONDUCTOR or group_name == TICKET_DIRECTOR):
+        elif request.path.find('/add_ticket') > 0 and group_type in (StaffType.TICKET_CONDUCTOR, StaffType.TICKET_DIRECTOR):
             # 寄出发票时记录 invoicelog
             for formset in formsets:
                 if formset.form.Meta.model is TransactionTicket:
                     for inline_form in formset.forms:
-                        inline_form.instance.status = TICKET_RECEIVED_PENDING if group_name == TICKET_CONDUCTOR else TICKET_RECEIVED
+                        inline_form.instance.status = TicketStatus.TICKET_RECEIVED_PENDING \
+                            if group_type == StaffType.TICKET_CONDUCTOR else TicketStatus.TICKET_RECEIVED
                         ticket_log = TicketLog()
                         ticket_log.ticket_id = inline_form.instance.id
-                        ticket_log.before_status = TICKET_UNRECEIVED
-                        ticket_log.after_status = TICKET_RECEIVED_PENDING if group_name == TICKET_CONDUCTOR else TICKET_RECEIVED
+                        ticket_log.before_status = TicketStatus.TICKET_UNRECEIVED
+                        ticket_log.after_status = TicketStatus.TICKET_RECEIVED_PENDING \
+                            if group_type == StaffType.TICKET_CONDUCTOR else TicketStatus.TICKET_RECEIVED
                         ticket_log.operator = user_profile
                         ticket_log.remarks = u'收到汇票，EMS单号：%s' % inline_form.instance.receive_ems
                         ticket_log.save()
@@ -753,10 +755,12 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             self.inlines = [TicketFormerHolderAddInline, TransactionOperationEditInline]
             self.change_form_template = None
-            return super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
+            return super(TransactionOrderAdmin, self).change_view(request,
+                                                                  object_id,
+                                                                  form_url,
+                                                                  extra_context)
 
         order = TransactionOrder.objects.get(id=long(object_id))
-
         if order.status == TransactionStatus.TRANSACTION_PROCESSING:
             self.inlines = [TicketFormerHolderReadonlyInline]
             self.exclude = [
@@ -812,11 +816,12 @@ class TransactionOrderAdmin(admin.ModelAdmin):
             raise PermissionDenied
 
         operation_list = TransactionOperation.objects.filter(transaction_id=order.id).all()
-        operation_alldone = True  # 贴现操作是否全部完成
-        for op in operation_list:
-            if op.status != OperationStatus.OPERATION_FINISHED:
-                operation_alldone = False
-                break
+
+        # If all the operations have been finished
+        operation_alldone = False
+        if all(op.status == OperationStatus.OPERATION_FINISHED for op in operation_list):
+                operation_alldone = True
+
         extra_context = dict(operation_list=operation_list,
                              title=u'查看贴现服务',
                              OPERATION_UNACTIVATED=OperationStatus.OPERATION_UNACTIVATED,
@@ -889,11 +894,11 @@ class TransactionOperationAdmin(admin.ModelAdmin):
         member_id = long(request.POST['member_id'])
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         # check for user permission
         if member_type == OperatorType.OPERATOR_PLATFORM:
-            if not group_name == SERVICE_MANAGER and not group_name == ZONE_SERVICE:
+            if not group_type in (StaffType.SERVICE_MANAGER, StaffType.ZONE_SERVICE):
                 return HttpResponseNotFound(u'仅客服及客服经理能执行此操作')
         else:
             if member_type == OperatorType.OPERATOR_RECEIVER or member_type == OperatorType.OPERATOR_PAYER:
@@ -941,9 +946,9 @@ class TransactionOperationAdmin(admin.ModelAdmin):
     @transaction.atomic
     def confirm(self, request, object_id, form_url='', extra_context=None):
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if not group_name == SERVICE_MANAGER and not group_name == ZONE_SERVICE:
+        if not group_type in (StaffType.SERVICE_MANAGER, StaffType.ZONE_SERVICE):
             return HttpResponseNotFound(u'仅客服及客服经理能执行此操作')
 
         operation = TransactionOperation.objects.get(pk=object_id)
@@ -956,14 +961,15 @@ class TransactionOperationAdmin(admin.ModelAdmin):
         # todo 审核时间
         operation.save()
         # 激活下一个贴现操作
-        operation_list = TransactionOperation.objects.filter(transaction_id=operation.transaction_id).order_by('sequence').all()
-        for i in range(operation_list.count()):
-            if operation.id == operation_list[i].id:
-                if i + 1 < operation_list.count():
-                    op = operation_list[i + 1]
-                    op.status = OPERATION_ACTIVATED
-                    op.save()
-                    break
+        operation_list = TransactionOperation.objects.filter(
+            transaction_id=operation.transaction_id,
+            status=OperationStatus.OPERATION_UNACTIVATED
+        ).order_by('sequence').all()
+        if operation_list.count() > 0:
+            for op in operation_list:
+                op.status = OperationStatus.OPERATION_ACTIVATED
+                op.save()
+                break
 
         return HttpResponseRedirect('/admin/transaction/transactionorder/%s/' % operation.transaction_id)
 
