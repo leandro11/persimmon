@@ -277,7 +277,10 @@ class TransactionClaimAdmin(admin.ModelAdmin):
         self.form = TransactionClaimConfirmForm
         if request.user.is_superuser:
             # todo 更改操作成功后的返回页面
-            return super(TransactionClaimAdmin, self).change_view(request, object_id, form_url, extra_context)
+            return super(TransactionClaimAdmin, self).change_view(request,
+                                                                  object_id,
+                                                                  form_url,
+                                                                  extra_context)
 
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
@@ -353,7 +356,7 @@ class TransactionClaimAdmin(admin.ModelAdmin):
 
                     # active first operation
                     if is_first:
-                        operation.status = OPERATION_ACTIVATED
+                        operation.status = OperationStatus.OPERATION_ACTIVATED
                         is_first = False
                     operation.save()
             form.instance.status = TransactionClaimStatus.CLAIM_PASSED
@@ -473,7 +476,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                 'user': request.user,
             })
         else:
-            order.status = TRANSACTION_DONE
+            order.status = TransactionStatus.TRANSACTION_DONE
             order.finish_time = datetime.datetime.now()
             order.save()
 
@@ -498,6 +501,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         if request.user.is_superuser or group_type == StaffType.ACCOUNTANT:
             self.inlines = [InvoiceAddInline]
             self.exclude = ['transaction_claim', 'finish_time', 'invoice', 'ticket']
+            self.readonly_fields = []
             self.readonly_fields = [
                 'ticket_number', 'receivable_enterprise', 'pay_enterprise',
                 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee',
@@ -520,7 +524,11 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                 # return super(TransactionOrderAdmin, self).changelist_view(request, extra_context)
                 invoice = Invoice.objects.get(transaction_id=long(object_id))
                 return HttpResponseRedirect('/staff/ticket/invoice/%s/' % invoice.id)
-        return super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
+
+        return super(TransactionOrderAdmin, self).change_view(request,
+                                                              object_id,
+                                                              form_url,
+                                                              extra_context)
 
     @transaction.atomic
     def send_invoice(self, request, object_id, form_url='', extra_context=None):
