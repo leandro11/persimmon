@@ -190,9 +190,11 @@ class TransactionTicket(models.Model):
         self.create_state()
         return self.state.show_link()
 
+
     def show_director_link(self):
         self.create_state()
         return self.state.show_link(role=StaffType.TICKET_DIRECTOR)
+
 
     def ticket_bank_link(self):
         ticket_bank = Bank.objects.get(pk=self.ticket_bank_id)

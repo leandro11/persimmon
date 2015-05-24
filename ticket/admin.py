@@ -188,8 +188,8 @@ class TransactionTicketAdmin(admin.ModelAdmin):
             ticketlog.operator = get_user_profile(request.user)
             ticketlog.save()
 
-            # Platform execute receiving tickets
-            obj.receive_tickets()
+            # Platform execute checkin tickets
+            obj.checkin_tickets()
         super(TransactionTicketAdmin, self).save_model(request, obj, form, change)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
@@ -238,8 +238,7 @@ class TransactionTicketAdmin(admin.ModelAdmin):
             self.list_filter = []
             self.list_display = [
                 'number', 'transaction_link', 'ticket_bank_link', 'amount',
-                'receive_ems', 'send_ems', 'create_time', 'receive_ticket_link',
-                'verify_ticket_link', 'checkin_link', 'checkout_link'
+                'receive_ems', 'send_ems', 'create_time', 'status'
             ]
             if 'verify_pending' in request.GET and request.GET['verify_pending'].isdigit():
                 ticket = TransactionTicket.objects.get(pk=long(request.GET['verify_pending']))
@@ -271,8 +270,7 @@ class TransactionTicketAdmin(admin.ModelAdmin):
             self.list_filter = []
             self.list_display = [
                 'number', 'transaction_link', 'ticket_bank_link', 'amount',
-                'receive_ems', 'send_ems', 'create_time', 'receive_ticket_link_director',
-                'verify_ticket_link_director', 'checkin_link_director', 'checkout_link_director'
+                'receive_ems', 'send_ems', 'create_time', 'status'
             ]
             if 'receive_confirm' in request.GET and request.GET['receive_confirm'].isdigit():
                 ticket = TransactionTicket.objects.get(pk=long(request.GET['receive_confirm']))

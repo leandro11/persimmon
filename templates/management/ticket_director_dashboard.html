@@ -41,7 +41,7 @@
             <td>{{ order.send_ems }}</td>
             <td>{{ order.create_time }}</td>
             {% for item in order.show_director_link %}
-                <td>{{ item }}</td>
+                <td>{{ item|safe }}</td>
             {% endfor %}
             </tr>
         {% endfor %}
