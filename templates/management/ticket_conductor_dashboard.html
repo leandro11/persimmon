@@ -65,8 +65,8 @@
         <th>出票快递</th>
         <th>收票时间</th>
         <th>收票</th>
-        <th>验票</th>
         <th>入库</th>
+        <th>验票</th>
         <th>出库</th>
       </tr></thead>
     {% if ongoing_tickets %}
@@ -79,14 +79,13 @@
             <td>{{ order.receive_ems }}</td>
             <td>{{ order.send_ems }}</td>
             <td>{{ order.create_time }}</td>
-            <td>{{ order.receive_ticket_link|safe }}</td>
-            <td>{{ order.verify_ticket_link|safe }}</td>
-            <td>{{ order.checkin_link|safe }}</td>
-            <td>{{ order.checkout_link|safe }}</td>
+            {% for item in order.show_conductor_link %}
+                <td>{{ item }}</td>
+            {% endfor %}
             </tr>
         {% endfor %}
         <tr>
-            <td colspan="11" style="text-align: center"><b><a href="/staff/ticket/transactionticket/?status__in=RECEIVED,VERIFIED,CHECKIN,CHECKOUT">查看全部</a></b></td>
+            <td colspan="11" style="text-align: center"><b><a href="/staff/ticket/transactionticket/?status__in=RECEIVED,CHECKIN,VERIFIED,CHECKOUT">查看全部</a></b></td>
         </tr>
     {% endif %}
     </table>

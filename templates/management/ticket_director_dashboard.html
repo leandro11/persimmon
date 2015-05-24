@@ -14,45 +14,6 @@
 </br>
 </br>
 <div id="content-main">
-    <!--div class="app-user module">
-    <table id="formset" class="form">
-    <caption>正在进行的贴现服务</caption>
-      <thead><tr>
-        <th>汇票单号</th>
-        <th>收款企业</th>
-        <th>付款企业</th>
-        <th>贴现银行</th>
-        <th>承兑银行</th>
-        <th>贴现金额</th>
-        <th>服务类型</th>
-        <th>服务费</th>
-        <th>订单状态</th>
-        <th>开始时间</th>
-      </tr></thead>
-    {% if ongoing_orders %}
-        {% for order in ongoing_orders %}
-            <tr class="row2">
-            <td><b><a href="/staff/transaction/transactionorder/{{ order.id }}/add_ticket"> {{ order.ticket_number  }}</a></b></td>
-            <td>{{ order.receivable_enterprise.name  }}</td>
-            <td>{{ order.pay_enterprise.name  }}</td>
-            <td>{{ order.ticket_bank.name  }}</td>
-            <td>{{ order.accept_bank.name  }}</td>
-            <td>{{ order.amount  }}</td>
-            <td>{{ order.type  }}</td>
-            <td>{{ order.fee  }}</td>
-            <td>{{ order.get_status_display   }}</td>
-            <td>{{ order.create_time   }}</td>
-            </tr>
-        {{ order|get_processing_operation|safe }}
-        {% endfor %}
-        <tr>
-            <td colspan="11" style="text-align: center"><b><a href="/staff/transaction/transactionorder/?status__exact=PROCESSING">查看全部</a></b></td>
-        </tr>
-    {% endif %}
-    </table>
-    </div>
-<br/>
-<br/-->
     <div class="app-user module">
     <table id="formset" class="form">
     <caption>等待审核的汇票</caption>
@@ -65,8 +26,8 @@
         <th>出票快递</th>
         <th>收票时间</th>
         <th>收票</th>
-        <th>验票</th>
         <th>入库</th>
+        <th>验票</th>
         <th>出库</th>
       </tr></thead>
     {% if pending_tickets %}
@@ -79,10 +40,9 @@
             <td>{{ order.receive_ems }}</td>
             <td>{{ order.send_ems }}</td>
             <td>{{ order.create_time }}</td>
-            <td>{{ order.receive_ticket_link_director|safe }}</td>
-            <td>{{ order.verify_ticket_link_director|safe }}</td>
-            <td>{{ order.checkin_link_director|safe }}</td>
-            <td>{{ order.checkout_link_director|safe }}</td>
+            {% for item in order.show_director_link %}
+                <td>{{ item }}</td>
+            {% endfor %}
             </tr>
         {% endfor %}
         <tr>

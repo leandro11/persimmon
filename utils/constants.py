@@ -170,10 +170,10 @@ TICKET_STATUS2 = (
     (TicketStatus.TICKET_UNRECEIVED, TicketStatus.get_description(TicketStatus.TICKET_UNRECEIVED)),
     (TicketStatus.TICKET_RECEIVED_PENDING, TicketStatus.get_description(TicketStatus.TICKET_RECEIVED_PENDING)),
     (TicketStatus.TICKET_RECEIVED, TicketStatus.get_description(TicketStatus.TICKET_RECEIVED)),
-    (TicketStatus.TICKET_VERIFIED_PENDING, TicketStatus.get_description(TicketStatus.TICKET_VERIFIED_PENDING)),
-    (TicketStatus.TICKET_VERIFIED, TicketStatus.get_description(TicketStatus.TICKET_VERIFIED)),
     (TicketStatus.TICKET_CHECKIN_PENDING, TicketStatus.get_description(TicketStatus.TICKET_CHECKIN_PENDING)),
     (TicketStatus.TICKET_CHECKIN, TicketStatus.get_description(TicketStatus.TICKET_CHECKIN)),
+    (TicketStatus.TICKET_VERIFIED_PENDING, TicketStatus.get_description(TicketStatus.TICKET_VERIFIED_PENDING)),
+    (TicketStatus.TICKET_VERIFIED, TicketStatus.get_description(TicketStatus.TICKET_VERIFIED)),
     (TicketStatus.TICKET_CHECKOUT_PENDING, TicketStatus.get_description(TicketStatus.TICKET_CHECKOUT_PENDING)),
     (TicketStatus.TICKET_CHECKOUT, TicketStatus.get_description(TicketStatus.TICKET_CHECKOUT))
 )
