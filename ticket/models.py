@@ -133,16 +133,65 @@ class TransactionTicket(models.Model):
     def set_state(self, state):
         self.state = state
 
-    def show_conductor_link(self):
-        if not self.state:
-            self.state = UnreceivedState(self)
+    def create_state(self):
+        if self.status == TicketStatus.TICKET_UNRECEIVED:
+            self.set_state(UnreceivedState(self))
+        elif self.status == TicketStatus.TICKET_RECEIVED_PENDING:
+            self.set_state(ReceivedPendingState(self))
+        elif self.status == TicketStatus.TICKET_RECEIVED:
+            self.set_state(ReceivedState(self))
+        elif self.status == TicketStatus.TICKET_CHECKIN_PENDING:
+            self.set_state(CheckinPendingState(self))
+        elif self.status == TicketStatus.TICKET_CHECKIN:
+            self.set_state(CheckinState(self))
+        elif self.status == TicketStatus.TICKET_VERIFIED_PENDING:
+            self.set_state(VerifiedPendingState(self))
+        elif self.status == TicketStatus.TICKET_VERIFIED:
+            self.set_state(VerifiedState(self))
+        elif self.status == TicketStatus.TICKET_CHECKOUT_PENDING:
+            self.set_state(CheckoutPendingState(self))
+        else:
+            # Status is Checkout State
+            self.set_state(CheckoutState(self))
 
+    def receive_tickets(self):
+        self.create_state()
+        self.state.receive_tickets()
+
+    def confirm_receive_tickets(self):
+        self.create_state()
+        self.state.confirm_receive_tickets()
+
+    def verify_tickets(self):
+        self.create_state()
+        self.state.verify_tickets()
+
+    def confirm_verify_tickets(self):
+        self.create_state()
+        self.state.confirm_verify_tickets()
+
+    def checkin_tickets(self):
+        self.create_state()
+        self.state.checkin_tickets()
+
+    def confirm_checkin_tickets(self):
+        self.create_state()
+        self.state.confirm_checkin_tickets()
+
+    def checkout_tickets(self):
+        self.create_state()
+        self.state.checkout_tickets()
+
+    def confirm_checkout_tickets(self):
+        self.create_state()
+        self.state.confirm_checkout_tickets()
+
+    def show_conductor_link(self):
+        self.create_state()
         return self.state.show_link()
 
     def show_director_link(self):
-        if not self.state:
-            self.state = UnreceivedState(self)
-
+        self.create_state()
         return self.state.show_link(role=StaffType.TICKET_DIRECTOR)
 
     def ticket_bank_link(self):
