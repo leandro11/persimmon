@@ -579,9 +579,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
 
-        if request.user.is_superuser or group_type in (StaffType.TICKET_CONDUCTOR, StaffType.TICKET_DIRECTOR):
-            pass
-        else:
+        if group_type not in (StaffType.TICKET_CONDUCTOR, StaffType.TICKET_DIRECTOR):
             raise PermissionDenied
 
         if request.method == 'POST':
