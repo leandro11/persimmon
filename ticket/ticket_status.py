@@ -51,6 +51,9 @@ class UnreceivedState(TicketState):
         # Change current ticket_obj's status
         self.ticket_obj.status = TicketStatus.TICKET_RECEIVED_PENDING
 
+        # Change transaction ticket status
+        self.ticket_obj.transaction.ticket_status = TicketStatus.TICKET_RECEIVED_PENDING
+
     def confirm_receive_tickets(self, **kwargs):
         pass
 
@@ -90,6 +93,9 @@ class ReceivedPendingState(TicketState):
     def confirm_receive_tickets(self, **kwargs):
         # Change current ticket_obj's status
         self.ticket_obj.status = TicketStatus.TICKET_RECEIVED
+
+        # Change transaction ticket status
+        self.ticket_obj.transaction.ticket_status = TicketStatus.TICKET_RECEIVED
 
     def verify_tickets(self, **kwargs):
         pass
@@ -147,6 +153,9 @@ class ReceivedState(TicketState):
         # Change current ticket_obj's status
         self.ticket_obj.status = TicketStatus.TICKET_CHECKIN_PENDING
 
+        # Change transaction ticket status
+        self.ticket_obj.transaction.ticket_status = TicketStatus.TICKET_CHECKIN_PENDING
+
     def confirm_checkin_tickets(self, **kwargs):
         pass
 
@@ -197,6 +206,9 @@ class CheckinPendingState(TicketState):
         # Change current ticket_obj's status
         self.ticket_obj.status = TicketStatus.TICKET_CHECKIN
 
+        # Change transaction ticket status
+        self.ticket_obj.transaction.ticket_status = TicketStatus.TICKET_CHECKIN
+
     def checkout_tickets(self, **kwargs):
         pass
 
@@ -234,6 +246,9 @@ class CheckinState(TicketState):
     def verify_tickets(self, **kwargs):
         # Change current ticket_obj's status
         self.ticket_obj.status = TicketStatus.TICKET_VERIFIED_PENDING
+
+        # Change transaction ticket status
+        self.ticket_obj.transaction.ticket_status = TicketStatus.TICKET_VERIFIED_PENDING
 
     def confirm_verify_tickets(self, **kwargs):
         pass
@@ -284,6 +299,9 @@ class VerifiedPendingState(TicketState):
     def confirm_verify_tickets(self, **kwargs):
         # Change current ticket_obj's status
         self.ticket_obj.status = TicketStatus.TICKET_VERIFIED
+
+        # Change transaction ticket status
+        self.ticket_obj.transaction.ticket_status = TicketStatus.TICKET_VERIFIED
 
     def checkin_tickets(self, **kwargs):
         pass
@@ -341,6 +359,9 @@ class VerifiedState(TicketState):
         # Change current ticket_obj's status
         self.ticket_obj.status = TicketStatus.TICKET_CHECKOUT_PENDING
 
+        # Change transaction ticket status
+        self.ticket_obj.transaction.ticket_status = TicketStatus.TICKET_CHECKOUT_PENDING
+
     def confirm_checkout_tickets(self, **kwargs):
         pass
 
@@ -390,6 +411,9 @@ class CheckoutPendingState(TicketState):
     def confirm_checkout_tickets(self, **kwargs):
         # Change current ticket_obj's status
         self.ticket_obj.status = TicketStatus.TICKET_CHECKOUT
+
+        # Change transaction ticket status
+        self.ticket_obj.transaction.ticket_status = TicketStatus.TICKET_CHECKOUT
 
     def show_link(self, **kwargs):
         if kwargs.get('role') == StaffType.TICKET_DIRECTOR:
