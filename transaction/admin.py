@@ -498,18 +498,17 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
 
-        if request.user.is_superuser or group_type == StaffType.ACCOUNTANT:
-            self.inlines = [InvoiceAddInline]
-            self.exclude = ['transaction_claim', 'finish_time', 'invoice', 'ticket']
-            self.readonly_fields = []
-            self.readonly_fields = [
-                'ticket_number', 'receivable_enterprise', 'pay_enterprise',
-                'ticket_bank', 'accept_bank', 'amount', 'type', 'fee',
-                'invoice_status', 'ticket_status', 'status', 'create_time'
-            ]
-            extra_context = dict(title=u'贴现开具发票', )
-        else:
+        if group_type != StaffType.ACCOUNTANT:
             raise PermissionDenied
+
+        self.inlines = [InvoiceAddInline]
+        self.exclude = ['transaction_claim', 'finish_time', 'invoice', 'ticket']
+        self.readonly_fields = [
+            'ticket_number', 'receivable_enterprise', 'pay_enterprise',
+            'ticket_bank', 'accept_bank', 'amount', 'type', 'fee',
+            'invoice_status', 'ticket_status', 'status', 'create_time'
+        ]
+        extra_context = dict(title=u'贴现开具发票', )
 
         if request.method == 'POST':
             result = super(TransactionOrderAdmin, self).change_view(request,

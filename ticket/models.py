@@ -12,6 +12,8 @@ from ticket.ticket_status import (
     UnreceivedState, ReceivedPendingState, ReceivedState, CheckinPendingState,
     CheckinState, VerifiedPendingState, VerifiedState, CheckoutPendingState,
     CheckoutState)
+from ticket.invoice_status import (
+    UnlodgedState, LodgedState, FinishedState, AbortState)
 
 
 class Invoice(models.Model):
@@ -27,6 +29,9 @@ class Invoice(models.Model):
     status = models.CharField(max_length=30, choices=INVOICE_STATUS, default=InvoiceStatus.INVOICE_LODGED, verbose_name=u'操作状态')
     create_time = models.DateTimeField(auto_now_add=True, editable=True, verbose_name=u'创建时间')
     finish_time = models.DateTimeField(blank=True, null=True, editable=True, verbose_name=u'完成时间', default=None)
+
+    # current state of invoice
+    state = None
 
     class Meta:
         verbose_name = u'发票'
@@ -56,19 +61,29 @@ class Invoice(models.Model):
     transaction_link.allow_tags = True
     transaction_link.short_description = u'贴现服务订单'
 
-    def send_invoice_link(self):
-        if self.status == InvoiceStatus.INVOICE_UNLODGED:
-            return u''
-        elif self.status == InvoiceStatus.INVOICE_LODGED:
-            # invoice = Invoice.objects.get(transaction_id=obj.id)
-            return u'<a class="button" href="/staff/ticket/invoice/%s/send"><strong>发票寄出</strong></a>' % self.id
-        elif self.status == InvoiceStatus.INVOICE_FINISHED:
-            # invoice = Invoice.objects.get(transaction_id=obj.id)
-            # return u'<a href="/staff/ticket/invoice/%s"><strong>已寄出</strong></a>' % invoice.id
-            return u'已寄出'
+    def set_state(self, state):
+        self.state = state
 
-    send_invoice_link.allow_tags = True
-    send_invoice_link.short_description = u'发票寄出'
+    def create_state(self):
+        if self.status == InvoiceStatus.INVOICE_UNLODGED:
+            self.set_state(UnlodgedState(self))
+        elif self.status == InvoiceStatus.INVOICE_LODGED:
+            self.set_state(LodgedState(self))
+        elif self.status == InvoiceStatus.INVOICE_FINISHED:
+            self.set_state(FinishedState(self))
+        else:
+            self.set_state(AbortState(self))
+
+    def show_link(self):
+        self.create_state()
+        return self.state.show_link()
+
+    show_link.allow_tags = True
+    show_link.short_description = u'发票寄出'
+
+    def send(self):
+        self.create_state()
+        self.state.send()
 
 
 # 记录发票状态变更记录

@@ -94,7 +94,7 @@ class InvoiceAdmin(admin.ModelAdmin):
             self.list_filter = ['status', ]
             self.list_display = [
                 'number', 'amount', 'transaction_link', 'market_manager_link',
-                'send_ems', 'create_time', 'send_invoice_link'
+                'send_ems', 'create_time', 'show_link'
             ]
             return super(InvoiceAdmin, self).changelist_view(request, extra_context)
 
@@ -105,13 +105,13 @@ class InvoiceAdmin(admin.ModelAdmin):
             self.list_filter = ['status', ]
             self.list_display = [
                 'number', 'amount', 'transaction_link', 'market_manager_link',
-                'send_ems', 'create_time', 'send_invoice_link'
+                'send_ems', 'create_time', 'show_link'
             ]
         elif group_type == StaffType.TOP_MANAGER:
             self.list_filter = ['status', ]
             self.list_display = [
                 'number', 'amount', 'transaction_link', 'market_manager_link',
-                'send_ems', 'create_time', 'send_invoice_link'
+                'send_ems', 'create_time', 'show_link'
             ]
         else:
             raise PermissionDenied
@@ -123,7 +123,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
         if request.path.find('/send') > 0 and group_type == StaffType.ACCOUNTANT:
-            obj.status = InvoiceStatus.INVOICE_FINISHED
+            obj.send()      # Send invoice
             invoice_log = InvoiceLog()
             invoice_log.invoice_id = obj.id
             invoice_log.before_status = Invoice.objects.get(pk=obj.id).status
