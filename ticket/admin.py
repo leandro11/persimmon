@@ -187,7 +187,9 @@ class TransactionTicketAdmin(admin.ModelAdmin):
             ticketlog.remarks = u'入库待审核，入库EMS单号：%s' % obj.send_ems
             ticketlog.operator = get_user_profile(request.user)
             ticketlog.save()
-            obj.status = TicketStatus.TICKET_CHECKIN_PENDING
+
+            # Platform execute checkin tickets
+            obj.checkin_tickets()
         super(TransactionTicketAdmin, self).save_model(request, obj, form, change)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
@@ -236,8 +238,7 @@ class TransactionTicketAdmin(admin.ModelAdmin):
             self.list_filter = []
             self.list_display = [
                 'number', 'transaction_link', 'ticket_bank_link', 'amount',
-                'receive_ems', 'send_ems', 'create_time', 'receive_ticket_link',
-                'verify_ticket_link', 'checkin_link', 'checkout_link'
+                'receive_ems', 'send_ems', 'create_time', 'status'
             ]
             if 'verify_pending' in request.GET and request.GET['verify_pending'].isdigit():
                 ticket = TransactionTicket.objects.get(pk=long(request.GET['verify_pending']))
@@ -248,7 +249,8 @@ class TransactionTicketAdmin(admin.ModelAdmin):
                 ticketlog.remarks = u'验票操作，等待审核'
                 ticketlog.operator = user_profile
                 ticketlog.save()
-                ticket.status = TicketStatus.TICKET_VERIFIED_PENDING
+
+                ticket.verify_tickets()
                 ticket.save()
 
             if 'checkout_pending' in request.GET and request.GET['checkout_pending'].isdigit():
@@ -260,15 +262,15 @@ class TransactionTicketAdmin(admin.ModelAdmin):
                 ticketlog.remarks = u'出库操作，等待审核'
                 ticketlog.operator = user_profile
                 ticketlog.save()
-                ticket.status = TicketStatus.TICKET_CHECKOUT_PENDING
+
+                ticket.checkout_tickets()
                 ticket.save()
 
         elif group_type == StaffType.TICKET_DIRECTOR:
             self.list_filter = []
             self.list_display = [
                 'number', 'transaction_link', 'ticket_bank_link', 'amount',
-                'receive_ems', 'send_ems', 'create_time', 'receive_ticket_link_director',
-                'verify_ticket_link_director', 'checkin_link_director', 'checkout_link_director'
+                'receive_ems', 'send_ems', 'create_time', 'status'
             ]
             if 'receive_confirm' in request.GET and request.GET['receive_confirm'].isdigit():
                 ticket = TransactionTicket.objects.get(pk=long(request.GET['receive_confirm']))
@@ -279,7 +281,8 @@ class TransactionTicketAdmin(admin.ModelAdmin):
                 ticketlog.remarks = u'收票审核通过'
                 ticketlog.operator = user_profile
                 ticketlog.save()
-                ticket.status = TicketStatus.TICKET_RECEIVED
+
+                ticket.confirm_receive_tickets()
                 ticket.save()
 
             if 'verify_confirm' in request.GET and request.GET['verify_confirm'].isdigit():
@@ -291,7 +294,8 @@ class TransactionTicketAdmin(admin.ModelAdmin):
                 ticketlog.remarks = u'验票审核通过'
                 ticketlog.operator = user_profile
                 ticketlog.save()
-                ticket.status = TicketStatus.TICKET_VERIFIED
+
+                ticket.confirm_verify_tickets()
                 ticket.save()
 
             if 'checkin_confirm' in request.GET and request.GET['checkin_confirm'].isdigit():
@@ -303,7 +307,8 @@ class TransactionTicketAdmin(admin.ModelAdmin):
                 ticketlog.remarks = u'入库审核通过'
                 ticketlog.operator = user_profile
                 ticketlog.save()
-                ticket.status = TicketStatus.TICKET_CHECKIN
+
+                ticket.confirm_checkin_tickets()
                 ticket.save()
 
             if 'checkout_confirm' in request.GET and request.GET['checkout_confirm'].isdigit():
@@ -315,7 +320,8 @@ class TransactionTicketAdmin(admin.ModelAdmin):
                 ticketlog.remarks = u'出库审核通过'
                 ticketlog.operator = user_profile
                 ticketlog.save()
-                ticket.status = TicketStatus.TICKET_CHECKOUT
+
+                ticket.confirm_checkout_tickets()
                 ticket.save()
         else:
             raise PermissionDenied

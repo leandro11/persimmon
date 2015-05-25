@@ -6,7 +6,12 @@ from transaction.models import *
 from utils.constants import *
 from utils.constants import (
     InvoiceStatus, INVOICE_STATUS, INVOICE_STATUS2, TicketStatus,
-    TICKET_STATUS, TICKET_STATUS2)
+    TICKET_STATUS, TICKET_STATUS2, StaffType)
+
+from ticket.ticket_status import (
+    UnreceivedState, ReceivedPendingState, ReceivedState, CheckinPendingState,
+    CheckinState, VerifiedPendingState, VerifiedState, CheckoutPendingState,
+    CheckoutState)
 
 
 class Invoice(models.Model):
@@ -100,6 +105,9 @@ class TransactionTicket(models.Model):
     create_time = models.DateTimeField(auto_now_add=True, editable=True, verbose_name=u'收票时间')
     finish_time = models.DateTimeField(blank=True, null=True, editable=True, verbose_name=u'完成时间', default=None)
 
+    # current state of ticket
+    state = None
+
     class Meta:
         verbose_name = u'汇票'
         verbose_name_plural = u'汇票'
@@ -122,115 +130,71 @@ class TransactionTicket(models.Model):
     transaction_link.allow_tags = True
     transaction_link.short_description = u'贴现服务订单'
 
-    def receive_ticket_link(self):
-        if self.status == TicketStatus.TICKET_RECEIVED_PENDING:
-            return u'收票待核'
-        else:
-            return u'收票完成'
+    def set_state(self, state):
+        self.state = state
 
-    receive_ticket_link.allow_tags = True
-    receive_ticket_link.short_description = u'收票'
-
-    def receive_ticket_link_director(self):
-        if self.status == TicketStatus.TICKET_RECEIVED_PENDING:
-            return u'<a class="button" href="/staff/ticket/transactionticket/?receive_confirm=%s"><strong>确认收票</strong></a>' % self.id
-        else:
-            return u'收票完成'
-
-    receive_ticket_link_director.allow_tags = True
-    receive_ticket_link_director.short_description = u'收票'
-
-    def verify_ticket_link(self):
-        if self.status == TicketStatus.TICKET_RECEIVED_PENDING:
-            return u''
+    def create_state(self):
+        if self.status == TicketStatus.TICKET_UNRECEIVED:
+            self.set_state(UnreceivedState(self))
+        elif self.status == TicketStatus.TICKET_RECEIVED_PENDING:
+            self.set_state(ReceivedPendingState(self))
         elif self.status == TicketStatus.TICKET_RECEIVED:
-            # invoice = Invoice.objects.get(transaction_id=self.id)
-            return u'<a class="button" href="/staff/ticket/transactionticket/?verify_pending=%s"><strong>执行验票</strong></a>' % self.id
-        elif self.status == TicketStatus.TICKET_VERIFIED_PENDING:
-            return u'等待审核'
-        else:
-            return u'验票完成'
-
-    verify_ticket_link.allow_tags = True
-    verify_ticket_link.short_description = u'验票'
-
-    def verify_ticket_link_director(self):
-        if self.status == TicketStatus.TICKET_RECEIVED_PENDING:
-            return u''
-        elif self.status == TicketStatus.TICKET_RECEIVED:
-            return u'等待验票'
-        elif self.status == TicketStatus.TICKET_VERIFIED_PENDING:
-            return u'<a class="button" href="/staff/ticket/transactionticket/?verify_confirm=%s"><strong>确认验票</strong></a>' % self.id
-        else:
-            return u'验票完成'
-
-    verify_ticket_link_director.allow_tags = True
-    verify_ticket_link_director.short_description = u'验票'
-
-    def checkin_link(self):
-        if self.status == TicketStatus.TICKET_VERIFIED_PENDING:
-            return u''
-        elif (self.status == TicketStatus.TICKET_RECEIVED_PENDING or
-              self.status == TicketStatus.TICKET_RECEIVED):
-            return u''
-        elif self.status == TicketStatus.TICKET_VERIFIED:
-            return u'<a class="button" href="/staff/ticket/transactionticket/%s/checkin"><strong>执行入库</strong></a>' % self.id
+            self.set_state(ReceivedState(self))
         elif self.status == TicketStatus.TICKET_CHECKIN_PENDING:
-            return u'等待审核'
-        else:
-            return u'入库完成'
-
-    checkin_link.allow_tags = True
-    checkin_link.short_description = u'入库'
-
-    def checkin_link_director(self):
-        if (self.status == TicketStatus.TICKET_RECEIVED_PENDING or
-            self.status == TicketStatus.TICKET_RECEIVED or
-            self.status == TicketStatus.TICKET_VERIFIED_PENDING):
-            return u''
+            self.set_state(CheckinPendingState(self))
+        elif self.status == TicketStatus.TICKET_CHECKIN:
+            self.set_state(CheckinState(self))
+        elif self.status == TicketStatus.TICKET_VERIFIED_PENDING:
+            self.set_state(VerifiedPendingState(self))
         elif self.status == TicketStatus.TICKET_VERIFIED:
-            return u'等待入库'
-        elif self.status == TicketStatus.TICKET_CHECKIN_PENDING:
-            return u'<a class="button" href="/staff/ticket/transactionticket/?checkin_confirm=%s"><strong>确认入库</strong></a>' % self.id
-        else:
-            return u'入库完成'
-
-    checkin_link_director.allow_tags = True
-    checkin_link_director.short_description = u'入库'
-
-    def checkout_link(self):
-        if self.status == TicketStatus.TICKET_CHECKOUT_PENDING:
-            return u'等待审核'
-        elif (self.status == TicketStatus.TICKET_VERIFIED_PENDING or
-              self.status == TicketStatus.TICKET_VERIFIED or
-              self.status == TicketStatus.TICKET_RECEIVED_PENDING or
-              self.status == TicketStatus.TICKET_RECEIVED or
-              self.status == TicketStatus.TICKET_CHECKIN_PENDING):
-            return u''
-        elif self.status == TicketStatus.TICKET_CHECKIN:
-            return u'<a class="button" href="/staff/ticket/transactionticket/?checkout_pending=%s"><strong>执行出库</strong></a>' % self.id
-        else:
-            return u'出库完成'
-
-    checkout_link.allow_tags = True
-    checkout_link.short_description = u'出库'
-
-    def checkout_link_director(self):
-        if (self.status == TicketStatus.TICKET_VERIFIED_PENDING or
-            self.status == TicketStatus.TICKET_VERIFIED or
-            self.status == TicketStatus.TICKET_RECEIVED_PENDING or
-            self.status == TicketStatus.TICKET_RECEIVED or
-            self.status == TicketStatus.TICKET_CHECKIN_PENDING):
-            return u''
-        elif self.status == TicketStatus.TICKET_CHECKIN:
-            return u'等待出库'
+            self.set_state(VerifiedState(self))
         elif self.status == TicketStatus.TICKET_CHECKOUT_PENDING:
-            return u'<a class="button" href="/staff/ticket/transactionticket/?checkout_confirm=%s"><strong>确认出库</strong></a>' % self.id
+            self.set_state(CheckoutPendingState(self))
         else:
-            return u'出库完成'
+            # Status is Checkout State
+            self.set_state(CheckoutState(self))
 
-    checkout_link_director.allow_tags = True
-    checkout_link_director.short_description = u'出库'
+    def receive_tickets(self):
+        self.create_state()
+        self.state.receive_tickets()
+
+    def confirm_receive_tickets(self):
+        self.create_state()
+        self.state.confirm_receive_tickets()
+
+    def verify_tickets(self):
+        self.create_state()
+        self.state.verify_tickets()
+
+    def confirm_verify_tickets(self):
+        self.create_state()
+        self.state.confirm_verify_tickets()
+
+    def checkin_tickets(self):
+        self.create_state()
+        self.state.checkin_tickets()
+
+    def confirm_checkin_tickets(self):
+        self.create_state()
+        self.state.confirm_checkin_tickets()
+
+    def checkout_tickets(self):
+        self.create_state()
+        self.state.checkout_tickets()
+
+    def confirm_checkout_tickets(self):
+        self.create_state()
+        self.state.confirm_checkout_tickets()
+
+    def show_conductor_link(self):
+        self.create_state()
+        return self.state.show_link()
+
+
+    def show_director_link(self):
+        self.create_state()
+        return self.state.show_link(role=StaffType.TICKET_DIRECTOR)
+
 
     def ticket_bank_link(self):
         ticket_bank = Bank.objects.get(pk=self.ticket_bank_id)
