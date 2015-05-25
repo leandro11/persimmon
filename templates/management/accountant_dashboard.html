@@ -74,7 +74,7 @@
             <td>{{ order.market_manager.name }}</td>
             <td>{{ order.send_ems }}</td>
             <td>{{ order.create_time }}</td>
-            <td>{{ order.send_invoice_link | safe }}</td>
+            <td>{{ order.show_link | safe }}</td>
             </tr>
         {% endfor %}
         <tr>
@@ -105,7 +105,7 @@
             <td>{{ order.market_manager.name }}</td>
             <td>{{ order.send_ems }}</td>
             <td>{{ order.create_time }}</td>
-            <td>{{ order.send_invoice_link | safe }}</td>
+            <td>{{ order.show_link | safe }}</td>
             </tr>
         {% endfor %}
         <tr>
