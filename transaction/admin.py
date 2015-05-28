@@ -39,7 +39,8 @@ from utils.constants import (
     CLAIM_STATUS, TransactionStatus, InvoiceStatus, TicketStatus,
     MemberType, OperationStatus, OPERATION_STATUS, OperationType,
     OPERATION_TYPE, OperatorType, OPERATOR_TYPE)
-from utils.user import group_check, get_group, get_user_profile
+from utils.user import (
+    group_check, get_group, get_user_profile, is_staff_user, is_member_user)
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -386,33 +387,30 @@ class TransactionClaimAdmin(admin.ModelAdmin):
             raise PermissionDenied
 
     def changelist_view(self, request, extra_context=None):
-        self.list_display = ['name_link', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'status']
+        self.list_display = [
+            'name_link', 'receivable_enterprise', 'pay_enterprise',
+            'ticket_bank', 'accept_bank', 'amount', 'status'
+        ]
         if request.user.is_superuser:
             return super(TransactionClaimAdmin, self).changelist_view(request, extra_context)
 
-        user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
-
-        # 只允许工作人员用户查看changelist
-        if isinstance(user_profile, Staff):
-            pass
-        else:
-            return Http404
-
         title = u'全部贴现申请'
         if u'status__exact' in request.GET:
-            status = request.GET[u'status__exact'].lower()
-            if status == TransactionClaimStatus.CLAIM_PENDING.lower():
-                self.list_display = ['confirm_number_link', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'confirm_button_link']
+            status = request.GET[u'status__exact']
+            if status == TransactionClaimStatus.CLAIM_PENDING:
                 title = u'待审核的贴现申请'
+
+                if is_staff_user(request.user):
+                    self.list_display.append('confirm_button_link')
+
             elif status == CLAIM_PASSED.lower():
                 title = u'审核通过的贴现申请'
             elif status == CLAIM_ABORT.lower():
                 title = u'已放弃的贴现申请'
 
-        extra_context = dict(
-            title=title,
-        )
+        extra_context = {
+            'title': title
+        }
         return super(TransactionClaimAdmin, self).changelist_view(request, extra_context)
 
 
