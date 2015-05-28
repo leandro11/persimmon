@@ -205,7 +205,8 @@ class TransactionClaimAdmin(admin.ModelAdmin):
         group_type = None if user_profile is None else user_profile.grouptype
 
         # Only enterprise contactor and operator could create transaction apply
-        if group_type in (MemberUserType.ENTERPRISE_CONTACTOR, MemberUserType.ENTERPRISE_OPERATOR):
+        if group_type in (MemberUserType.ENTERPRISE_CONTACTOR,
+                          MemberUserType.ENTERPRISE_OPERATOR):
             self.form = TransactionClaimAddForm
             self.change_form_template = 'member/member_change_form.html'
             extra_context = dict(title=u'发起贴现申请', )
