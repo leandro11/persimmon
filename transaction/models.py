@@ -100,7 +100,7 @@ class TransactionClaim(models.Model):
 
     def name_link(self):
         if self.ticket_number:
-            return u'%s' % self.ticket_number
+            return u'<a href="/transaction/transactionclaim/%s"><strong>%s</strong></a>' % (self.id, self.ticket_number)
         else:
             return u'%s 付款至 %s' % (self.pay_enterprise, self.receivable_enterprise.name)
 
@@ -155,6 +155,12 @@ class TransactionOrder(models.Model):
 
     def __unicode__(self):
         return u'[贴现订单]%s' % self.ticket_number
+
+    def name_link(self):
+        return u'<a href="/transaction/transactionorder/%s"><strong>%s</strong></a>' % (self.id, self.ticket_number)
+
+    name_link.allow_tags = True
+    name_link.short_description = u'汇票单号'
 
 
 class TicketFormerHolder(models.Model):

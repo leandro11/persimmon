@@ -58,6 +58,29 @@ def get_user_profile(user):
     except:
         return None
 
+
+def is_staff_user(user):
+    if isinstance(user, int):
+        user = User.objects.get(id=user)
+
+    groups = user.groups.all()
+    try:
+        return groups[0].id in StaffType.values
+    except:
+        return False
+
+
+def is_member_user(user):
+    if isinstance(user, int):
+        user = User.objects.get(id=user)
+
+    groups = user.groups.all()
+    try:
+        return groups[0].id in MemberUserType.values
+    except:
+        return False
+
+
 def create_meta_operation():
     mm = TransactionMetaOperation.objects.filter(
         transaction_type_id=TransactionCategory.TRANSACTION_TYPE3)

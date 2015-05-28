@@ -854,12 +854,15 @@ class EnterpriseAdmin(admin.ModelAdmin):
 
         self.change_form_template = 'member/member_change_form.html'
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         if not hasattr(user_profile, 'enterprise') or user_profile.enterprise_id != long(object_id):
             return HttpResponse('error: no privilege')  # 该联络人不属于该企业
-        elif group_name == ENTERPRISE_CONTACTOR:
-            self.exclude = ['licence', 'invite_code', 'expired_date', 'province', 'city', 'address', 'zipcode', 'fax_number', 'status', 'reference_count']
+        elif group_type == MemberUserType.ENTERPRISE_CONTACTOR:
+            self.exclude = [
+                'licence', 'invite_code', 'expired_date', 'province','city',
+                'address', 'zipcode', 'fax_number', 'status', 'reference_count'
+            ]
             self.readonly_fields = ['name', ]
             operator_count = EnterpriseOperator.objects.filter(enterprise_id=long(object_id)).count()
             # 执行人不满3人，可增加
@@ -869,8 +872,11 @@ class EnterpriseAdmin(admin.ModelAdmin):
             else:
                 # todo 去掉EnterpriseOperatorListInline的 add another按钮
                 self.inlines = [EnterpriseOperatorListInline]
-        elif group_name == ENTERPRISE_OPERATOR:
-            self.exclude = ['licence', 'user', 'invite_code', 'province', 'city', 'address', 'zipcode', 'fax_number', 'status', 'reference_count']
+        elif group_type == MemberUserType.ENTERPRISE_OPERATOR:
+            self.exclude = [
+                'licence', 'user', 'invite_code', 'province', 'city', 'address',
+                'zipcode', 'fax_number', 'status', 'reference_count'
+            ]
             self.readonly_fields = ['name', ]
             self.inlines = [EnterpriseOperatorListInline]
             # todo add other group here
@@ -987,15 +993,15 @@ class EnterpriseAdmin(admin.ModelAdmin):
 
         self.change_form_template = 'member/member_change_form.html'
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         if not hasattr(user_profile, 'enterprise') or user_profile.enterprise_id != long(object_id):
             return HttpResponse('error: no privilege')  # 该联络人不属于该企业
-        elif group_name == ENTERPRISE_CONTACTOR:
+        elif group_type == MemberUserType.ENTERPRISE_CONTACTOR:
             self.exclude = ['licence', 'invite_code', 'expired_date', 'province', 'city', 'address', 'zipcode', 'fax_number', 'status', 'reference_count']
             self.readonly_fields = ['name']
             self.inlines = [EnterpriseContactorInline]
-        elif group_name == ENTERPRISE_OPERATOR:
+        elif group_type == MemberUserType.ENTERPRISE_OPERATOR:
             self.exclude = ['licence', 'invite_code', 'province', 'city', 'address', 'zipcode', 'fax_number', 'status', 'expired_date', 'reference_count']
             self.readonly_fields = ['name']
             self.inlines = [EnterpriseContactorReadonlyInline]
@@ -1088,7 +1094,7 @@ class EnterpriseAdmin(admin.ModelAdmin):
                              hide_inline=True,
                              enterprise_id=object_id,
                              enterprise=enterprise,
-                             is_contactor=group_name == ENTERPRISE_CONTACTOR,
+                             is_contactor= group_type == MemberUserType.ENTERPRISE_CONTACTOR,
                              user_profile=user_profile,
         )
 
@@ -1389,9 +1395,10 @@ class EnterpriseAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_name == ENTERPRISE_OPERATOR or group_name == ENTERPRISE_CONTACTOR:
+        if group_type in (MemberUserType.ENTERPRISE_CONTACTOR,
+                          MemberUserType.ENTERPRISE_OPERATOR):
             return qs.filter(id=user_profile.enterprise_id)
         elif isinstance(user_profile, Staff):
             return qs
