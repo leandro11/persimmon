@@ -231,6 +231,7 @@ class TransactionClaimAdmin(admin.ModelAdmin):
     def change_view(self, request, object_id, form_url='', extra_context=None):
         self.exclude = []
         self.form = TransactionClaimAddForm
+        self.change_form_template = 'member/order_change_form_for_service.html'
 
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
@@ -391,6 +392,8 @@ class TransactionClaimAdmin(admin.ModelAdmin):
             'name_link', 'receivable_enterprise', 'pay_enterprise',
             'ticket_bank', 'accept_bank', 'amount', 'status'
         ]
+        self.change_list_template = 'member/history_order_change_list.html'
+
         if request.user.is_superuser:
             return super(TransactionClaimAdmin, self).changelist_view(request, extra_context)
 
@@ -656,7 +659,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         if request.user.is_superuser:
             self.list_filter = ['status', ]
-            self.list_display = ['ticket_number', 'amount', 'fee', 'status']
+            self.list_display = ['name_link', 'amount', 'fee', 'status']
             return super(TransactionOrderAdmin, self).changelist_view(request, extra_context)
 
         user_profile = get_user_profile(request.user)
@@ -665,30 +668,31 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
         # only for member user
         if group_type in MemberUserType.values:
-            # self.list_display = ('ticket_number', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'status')
             self.list_filter = ['status', ]
             self.list_display = [
-                'ticket_number', 'receivable_enterprise', 'pay_enterprise',
+                'name_link', 'receivable_enterprise', 'pay_enterprise',
                 'ticket_bank', 'accept_bank', 'amount', 'fee', 'invoice_status',
                 'ticket_status', 'create_time'
             ]
             self.change_list_template = 'member/history_order_change_list.html'
 
             # todo restrict queryset 找出该单位参与的
-        elif group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_SERVICE, StaffType.SERVICE_MANAGER, StaffType.ZONE_SERVICE, StaffType.TOP_MANAGER):
+        elif group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_SERVICE,
+                            StaffType.SERVICE_MANAGER, StaffType.ZONE_SERVICE,
+                            StaffType.TOP_MANAGER):
             # todo @zhangnan for staff
             self.change_list_template = 'management/change_list.html'
 
             self.list_filter = ['status', ]
             self.list_display = [
-                'ticket_number', 'receivable_enterprise', 'pay_enterprise',
+                'name_link', 'receivable_enterprise', 'pay_enterprise',
                 'ticket_bank', 'accept_bank', 'amount', 'fee', 'invoice_status',
                 'ticket_status', 'create_time'
             ]
         elif group_type == StaffType.ACCOUNTANT:
             self.list_filter = ['invoice_status', ]
             self.list_display = [
-                'ticket_number', 'receivable_enterprise', 'pay_enterprise',
+                'name_link', 'receivable_enterprise', 'pay_enterprise',
                 'amount', 'fee', 'invoice_status', 'ticket_status',
                 'create_time', 'add_invoice_link'
             ]
@@ -696,7 +700,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         elif group_type in (StaffType.TICKET_DIRECTOR, StaffType.TICKET_CONDUCTOR):
             self.list_filter = ['ticket_status', ]
             self.list_display = [
-                'ticket_number', 'payee_enterprise', 'payer_enterprise',
+                'name_link', 'payee_enterprise', 'payer_enterprise',
                 'ticket_bank_name', 'accept_bank_name', 'amount', 'fee',
                 'invoice_status', 'ticket_status', 'create_time', 'add_ticket_link'
             ]
