@@ -17,16 +17,6 @@
 
 {% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-form{% endblock %}
 
-{% if not is_popup %}
-{% block breadcrumbs %}
-<div class="breadcrumbs">
-<a href="/management/main">首页</a>
-&rsaquo; {{ opts.verbose_name_plural|capfirst }}
-&rsaquo; {{ original.name|truncatewords:"18" }}
-</div>
-{% endblock %}
-{% endif %}
-
 {% block content %}<div id="content-main">
 
 <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form" novalidate>{% csrf_token %}{% block form_top %}{% endblock %}

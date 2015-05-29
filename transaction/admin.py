@@ -278,19 +278,14 @@ class TransactionClaimAdmin(admin.ModelAdmin):
         request.GET._mutable = mutable
 
         self.form = TransactionClaimConfirmForm
-        if request.user.is_superuser:
-            # todo 更改操作成功后的返回页面
-            return super(TransactionClaimAdmin, self).change_view(request,
-                                                                  object_id,
-                                                                  form_url,
-                                                                  extra_context)
 
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
 
+        self.change_form_template = 'management/change_form.html'
+
         # market manager or zone market manager need to confirm application
         if group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_MARKET):
-            self.change_form_template = 'management/change_form.html'
             result = super(TransactionClaimAdmin, self).change_view(request,
                                                                     object_id,
                                                                     form_url,
@@ -303,7 +298,8 @@ class TransactionClaimAdmin(admin.ModelAdmin):
                 self.message_user(request, u'贴现申请已通过审核', messages.SUCCESS)
 
                 # return changelist view
-                return super(TransactionClaimAdmin, self).changelist_view(request, extra_context)
+                # return super(TransactionClaimAdmin, self).changelist_view(request, extra_context)
+                return self.changelist_view(request, extra_context)
 
             return result
 
@@ -393,10 +389,11 @@ class TransactionClaimAdmin(admin.ModelAdmin):
             'name_link', 'receivable_enterprise', 'pay_enterprise',
             'ticket_bank', 'accept_bank', 'amount', 'status'
         ]
-        self.change_list_template = 'member/history_order_change_list.html'
 
-        if request.user.is_superuser:
-            return super(TransactionClaimAdmin, self).changelist_view(request, extra_context)
+        if is_staff_user(request.user):
+            self.change_list_template = 'management/history_order_change_list.html'
+        else:
+            self.change_list_template = 'member/history_order_change_list.html'
 
         title = u'全部贴现申请'
         if u'status__exact' in request.GET:
@@ -405,11 +402,13 @@ class TransactionClaimAdmin(admin.ModelAdmin):
                 title = u'待审核的贴现申请'
 
                 if is_staff_user(request.user):
+                    self.list_display.remove('name_link')
+                    self.list_display.insert(0, 'confirm_number_link')
                     self.list_display.append('confirm_button_link')
 
-            elif status == CLAIM_PASSED.lower():
+            elif status == TransactionClaimStatus.CLAIM_PASSED:
                 title = u'审核通过的贴现申请'
-            elif status == CLAIM_ABORT.lower():
+            elif status == TransactionClaimStatus.CLAIM_ABORT:
                 title = u'已放弃的贴现申请'
 
         extra_context = {
