@@ -37,10 +37,14 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from member.models import *
 from utils.constants import (MemberUserType, MEMBER_USER_TYPE)
 from utils.constants import StaffType, MemberUserType
-from utils.user import group_check, get_group, get_user_profile
+from utils.user import (
+    group_check, get_group, get_user_profile, is_staff_user, is_member_user)
 from member.form import *
 from member.sites import site as member_site
 from management.sites import site as management_site
+from utils.user import (
+    group_check, get_group, get_user_profile, is_staff_user, is_member_user)
+
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -729,7 +733,7 @@ class BankAdmin(admin.ModelAdmin):
                              execution_agreements=execution_agreements,
                              hide_inline=False,
                              bank_id=object_id,
-                             is_contactor= group_type == StaffType.BANK_CONTACTOR,
+                             is_contactor= group_type == MemberUserType.BANK_CONTACTOR,
                              user_profile=user_profile,
                              bank=bank,
         )
@@ -777,19 +781,22 @@ class BankAdmin(admin.ModelAdmin):
             return super(BankAdmin, self).changelist_view(request, extra_context)
 
         user_profile = get_user_profile(request.user)
-        group_name = None if user_profile is None else user_profile.groupname
+        group_type = None if user_profile is None else user_profile.grouptype
 
         # 只允许工作人员用户查看changelist
         title = u'全部银行会员'
-        if isinstance(user_profile, Staff):
-            pass
+        if is_staff_user(request.user):
+            self.change_list_template = 'management/history_order_change_list.html'
         else:
             return Http404
 
         if u'status__exact' in request.GET:
             status = request.GET[u'status__exact'].lower()
             if status == MEMBER_PENDING.lower():
-                self.list_display = ['confirm_name_link', 'province', 'level', 'status', 'service_manager', 'create_date', 'confirm_button_link']
+                self.list_display = [
+                    'confirm_name_link', 'province', 'level', 'status',
+                    'service_manager', 'create_date', 'confirm_button_link'
+                ]
                 title = u'待审核的银行注册'
             elif status == MEMBER_ENABLED.lower():
                 title = u'已审核的银行注册'
@@ -1359,16 +1366,14 @@ class EnterpriseAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         self.list_display = ['name', 'province', 'level', 'status', 'service_manager', 'create_date']
         if request.user.is_superuser:
-            # todo
-            # self.list_display = ['user', 'bank', 'name', 'mobile_number', 'email', 'create_date', 'last_login']
             return super(EnterpriseAdmin, self).changelist_view(request, extra_context)
 
         user_profile = get_user_profile(request.user)
         group_name = None if user_profile is None else user_profile.groupname
 
         # 只允许工作人员用户查看changelist
-        if isinstance(user_profile, Staff):
-            pass
+        if is_staff_user(request.user):
+            self.change_list_template = 'management/history_order_change_list.html'
         else:
             return Http404
 

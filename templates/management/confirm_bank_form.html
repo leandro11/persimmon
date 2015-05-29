@@ -1,4 +1,4 @@
-{% extends "member/base_site.html" %}
+{% extends "management/base_site.html" %}
 {% load i18n admin_urls admin_static admin_modify %}
 
 {% block extrahead %}{{ block.super }}
@@ -16,16 +16,6 @@
 {% block object-tools %}{% endblock %}
 
 {% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-form{% endblock %}
-
-{% if not is_popup %}
-{% block breadcrumbs %}
-<div class="breadcrumbs">
-<a href="/member/main">会员首页</a>
-&rsaquo; {{ opts.verbose_name_plural|capfirst }}
-&rsaquo; {{ original.name|truncatewords:"18" }}
-</div>
-{% endblock %}
-{% endif %}
 
 {% block content %}<div id="content-main">
 
