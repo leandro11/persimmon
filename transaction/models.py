@@ -162,6 +162,12 @@ class TransactionOrder(models.Model):
     name_link.allow_tags = True
     name_link.short_description = u'汇票单号'
 
+    def staff_name_link(self):
+        return u'<a href="/staff/transaction/transactionorder/%s"><strong>%s</strong></a>' % (self.id, self.ticket_number)
+
+    staff_name_link.allow_tags = True
+    staff_name_link.short_description = u'汇票单号'
+
 
 class TicketFormerHolder(models.Model):
     '''
