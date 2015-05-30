@@ -168,6 +168,64 @@ class TransactionOrder(models.Model):
     staff_name_link.allow_tags = True
     staff_name_link.short_description = u'汇票单号'
 
+    def add_ticket_link(self):
+        # return u'<a class="button" href="/admin/transaction/transactionorder/%s/add_ticket"><strong>收票</strong></a>' % obj.id
+        if self.ticket_status == TicketStatus.TICKET_UNRECEIVED:
+            return u'<a class="button" href="/admin/transaction/transactionorder/%s/add_ticket"><strong>收票</strong></a>' % self.id
+        else:
+            return u'已收票'
+
+    add_ticket_link.allow_tags = True
+    add_ticket_link.short_description = u'收票'
+
+    def payee_enterprise(self):
+        return self.receivable_enterprise.name
+
+    payee_enterprise.allow_tags = True
+    payee_enterprise.short_description = u'收款企业'
+
+    def payer_enterprise(self):
+        return self.pay_enterprise.name
+
+    payer_enterprise.allow_tags = True
+    payer_enterprise.short_description = u'付款企业'
+
+    def add_invoice_link(self):
+        if self.invoice_status == InvoiceStatus.INVOICE_UNLODGED:
+            return u'<a class="button" href="/admin/transaction/transactionorder/%s/add_invoice"><strong>发票开具</strong></a>' % self.id
+        else:
+            return u'已开票'
+
+    add_invoice_link.allow_tags = True
+    add_invoice_link.short_description = u'发票开具'
+
+    def send_invoice_link(self):
+        if self.invoice_status == InvoiceStatus.INVOICE_UNLODGED:
+            return u''
+        elif self.invoice_status == InvoiceStatus.INVOICE_LODGED:
+            # invoice = Invoice.objects.get(transaction_id=obj.id)
+            return u'<a class="button" href="/admin/transaction/transactionorder/%s/send_invoice"><strong>发票寄出</strong></a>' % self.id
+        elif self.invoice_status == InvoiceStatus.INVOICE_ABORT:
+            return u'已作废'
+        elif self.invoice_status == InvoiceStatus.INVOICE_FINISHED:
+            invoice = Invoice.objects.get(transaction_id=self.id)
+            return u'<a href="/admin/ticket/invoice/%s"><strong>已寄出</strong></a>' % invoice.id
+
+    send_invoice_link.allow_tags = True
+    send_invoice_link.short_description = u'发票寄出'
+
+    def ticket_bank_name(self):
+        return self.ticket_bank.name
+
+    ticket_bank_name.allow_tags = True
+    ticket_bank_name.short_description = u'贴现银行'
+
+    def accept_bank_name(self):
+        return self.accept_bank.name
+
+    accept_bank_name.allow_tags = True
+    accept_bank_name.short_description = u'承兑银行'
+
 
 class TicketFormerHolder(models.Model):
     '''

@@ -193,28 +193,22 @@ class TransactionTicketAdmin(admin.ModelAdmin):
         super(TransactionTicketAdmin, self).save_model(request, obj, form, change)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
-        if request.user.is_superuser:
-            self.inlines = [TicketLogInline, ]
-            return super(TransactionTicketAdmin, self).change_view(request,
-                                                                   object_id,
-                                                                   form_url,
-                                                                   extra_context)
         self.readonly_fields = [
             'number', 'ticket_bank', 'amount', 'receive_ems', 'send_ems',
             'status', 'create_time', 'finish_time'
         ]
         self.exclude = ['transaction']
         self.inlines = [TicketLogInline, ]
+        self.change_form_template = 'management/change_form.html'
 
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
 
-        if group_type in (StaffType.TICKET_CONDUCTOR, StaffType.TICKET_DIRECTOR, StaffType.TOP_MANAGER):
-            pass
-        else:
+        if group_type not in (StaffType.TICKET_CONDUCTOR,
+                             StaffType.TICKET_DIRECTOR,
+                             StaffType.TOP_MANAGER):
             return Http404
 
-        self.change_list_template = 'management/change_form.html'
         return super(TransactionTicketAdmin, self).change_view(request,
                                                                object_id,
                                                                form_url,
