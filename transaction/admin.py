@@ -444,6 +444,8 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
     @transaction.atomic
     def finish_view(self, request, object_id, form_url='', extra_context=None):
+        self.change_form_template = 'management/order_change_form_for_service.html'
+
         if not request.method == 'POST':
             return super(TransactionOrderAdmin, self).change_view(request,
                                                                   object_id,
@@ -491,11 +493,12 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         invoices = Invoice.objects.filter(transaction_id=long(object_id))
         if invoices.count() > 0:
             return render_to_response("management/notify.html", {
-                "info": u'<h2>该贴现服务已有发票信息，<a href="/admin/ticket/invoice/%s">点击查看</a></h2>' % invoices.all()[0].id,
+                "info": u'<h2>该贴现服务已有发票信息，<a href="/staff/ticket/invoice/%s">点击查看</a></h2>' % invoices.all()[0].id,
                 "title": u'发票已存在',
                 'user': request.user,
             })
 
+        self.change_form_template = 'management/change_form.html'
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
 
@@ -536,6 +539,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         寄出发票
         '''
         invoices = Invoice.objects.filter(transaction_id=long(object_id))
+
         if invoices.count() < 1:
             return HttpResponseNotFound(u'<h1>该贴现服务尚未开具发票</h1>')
         elif invoices[0].status == InvoiceStatus.INVOICE_FINISHED:
@@ -544,7 +548,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
 
-        if request.user.is_superuser or group_type == StaffType.ACCOUNTANT:
+        if group_type == StaffType.ACCOUNTANT:
             self.inlines = [InvoiceEditInline]
             self.exclude = ['transaction_claim', 'finish_time', 'invoice', 'ticket']
             self.readonly_fields = [
@@ -555,6 +559,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
             extra_context = dict(title=u'贴现开具发票', )
         else:
             raise PermissionDenied
+
         return super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
 
     @transaction.atomic
@@ -788,7 +793,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
         elif group_type == StaffType.ACCOUNTANT:
             self.inlines = []
-            self.change_form_template = None
+            self.change_form_template = 'management/order_change_form_for_service.html'
             return super(TransactionOrderAdmin, self).change_view(request,
                                                                   object_id,
                                                                   form_url,
