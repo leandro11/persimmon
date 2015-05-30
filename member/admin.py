@@ -278,8 +278,12 @@ class BankAdmin(admin.ModelAdmin):
             return HttpResponse('error: no privilege')  # 该联络人不属于该银行
 
         if group_type == MemberUserType.BANK_CONTACTOR:
-            self.exclude = ['strategic_agreements', 'level', 'execution_agreements', 'invite_code', 'expired_date', 'province', 'city', 'address', 'zipcode', 'fax_number',
-                            'status', 'reference_count', 'referee_manager', 'service_manager', 'name']
+            self.exclude = [
+                'strategic_agreements', 'level', 'execution_agreements',
+                'invite_code', 'expired_date', 'province', 'city', 'address',
+                'zipcode', 'fax_number', 'status', 'reference_count',
+                'referee_manager', 'service_manager', 'name'
+            ]
             self.readonly_fields = ['short_name']
             operator_count = BankOperator.objects.filter(bank_id=long(object_id)).count()
             # 执行人不满3人，可增加
@@ -292,8 +296,12 @@ class BankAdmin(admin.ModelAdmin):
             else:
                 self.inlines = [BankOperatorListInline]
         elif group_type == MemberUserType.BANK_OPERATOR:
-            self.exclude = ['strategic_agreements', 'level', 'execution_agreements', 'user', 'invite_code', 'groupname', 'province', 'city', 'address', 'zipcode', 'fax_number',
-                            'status', 'reference_count', 'referee_manager', 'service_manager', 'name']
+            self.exclude = [
+                'strategic_agreements', 'level', 'execution_agreements', 'user',
+                'invite_code', 'groupname', 'province', 'city', 'address', 'zipcode',
+                'fax_number', 'status', 'reference_count', 'referee_manager',
+                'service_manager', 'name'
+            ]
             self.readonly_fields = ['short_name']
             self.inlines = [BankOperatorListInline]
         # todo add other group here
@@ -473,15 +481,6 @@ class BankAdmin(admin.ModelAdmin):
             )
         return super(BankAdmin, self).change_view(request, object_id, form_url, extra_context)
 
-    # If i comment these line service dashboard works well when user click bank type member
-    # def changelist_view(self, request, extra_context=None):
-    #     import ipdb; ipdb.set_trace()
-    #     if request.user.is_superuser:
-    #         return super(BankAdmin, self).changelist_view(request, extra_context)
-    #     group_name = get_group(request.user)
-    #     if group_name == BANK_CONTACTOR:
-    #         return HttpResponse('error: no privilige')
-
     def change_view(self, request, object_id, form_url='', extra_context=None):
         self.readonly_fields = []
         self.inlines = []
@@ -496,7 +495,10 @@ class BankAdmin(admin.ModelAdmin):
         if group_type in StaffType.values:
             self.change_form_template = 'management/confirm_bank_form.html'
             self.inlines = [BankContactorInline]
-            self.readonly_fields = ['level', 'status', 'invite_code', 'expired_date', 'reference_count', 'referee_manager']
+            self.readonly_fields = [
+                'level', 'status', 'invite_code', 'expired_date',
+                'reference_count', 'referee_manager'
+            ]
         elif group_type == MemberUserType.BANK_CONTACTOR:
             self.change_form_template = 'member/bank_display_form.html'
             self.inlines = [BankContactorInline]
@@ -505,14 +507,23 @@ class BankAdmin(admin.ModelAdmin):
         elif group_type == MemberUserType.BANK_OPERATOR:
             self.change_form_template = 'member/bank_display_form.html'
             self.inlines = [BankContactorReadonlyInline]
-            self.exclude = ['expired_date', 'invite_code', 'status', 'strategic_agreements', 'execution_agreements', 'referee_manager']
-            self.readonly_fields = ['name', 'short_name', 'province', 'city', 'address', 'zipcode', 'fax_number', 'level', 'reference_count', 'service_manager']
+            self.exclude = [
+                'expired_date', 'invite_code', 'status', 'strategic_agreements',
+                'execution_agreements', 'referee_manager'
+            ]
+            self.readonly_fields = [
+                'name', 'short_name', 'province', 'city', 'address', 'zipcode',
+                'fax_number', 'level', 'reference_count', 'service_manager'
+            ]
         else:
             raise PermissionDenied
 
         bank = Bank.objects.get(pk=object_id)
-        strategic_agreements = BankAttachment.objects.filter(bank_id=object_id, type=STRATEGIC_AGREEMENT).order_by('-create_time')[:5]
-        execution_agreements = BankAttachment.objects.filter(bank_id=object_id, type=EXECUTION_AGREEMENT).order_by('-create_time')[:5]
+        strategic_agreements = BankAttachment.objects.filter(
+            bank_id=object_id, type=STRATEGIC_AGREEMENT).order_by('-create_time')[:5]
+        execution_agreements = BankAttachment.objects.filter(
+            bank_id=object_id, type=EXECUTION_AGREEMENT).order_by('-create_time')[:5]
+
         extra_context = dict(self.admin_site.each_context(),
                              title=u'银行会员 %s' % bank.name,
                              strategic_agreements=strategic_agreements,
@@ -521,9 +532,8 @@ class BankAdmin(admin.ModelAdmin):
                              bank_id=object_id,
                              is_contactor= group_type == MemberUserType.BANK_CONTACTOR,
                              user_profile=user_profile,
-                             bank=bank,
+                             bank=bank
         )
-
         return super(BankAdmin, self).change_view(request, object_id, form_url, extra_context)
 
     def has_register_permission(self, request):
@@ -815,7 +825,7 @@ class BankAdmin(admin.ModelAdmin):
         if request.user.is_superuser:
             return qs
         user_profile = get_user_profile(request.user)
-        group_type = None if user_profile is None else user_profile.id
+        group_type = None if user_profile is None else user_profile.grouptype
 
         if group_type in (MemberUserType.BANK_CONTACTOR, MemberUserType.BANK_OPERATOR):
             return qs.filter(id=user_profile.bank_id)
