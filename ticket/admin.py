@@ -8,6 +8,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponseNotFound
 from django.db import transaction
 from django.contrib.admin.utils import unquote
+from django.http import Http404, HttpResponseRedirect
 
 from utils.user import get_user_profile
 from utils.constants import *
@@ -42,7 +43,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         寄出发票
         '''
         if Invoice.objects.get(pk=long(object_id)).status == InvoiceStatus.INVOICE_FINISHED:
-            return HttpResponseNotFound(u'<h1>该贴现服务的发票已经寄出</h1>')
+            return HttpResponseRedirect('/staff/ticket/invoice/%s/' % object_id)
 
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
@@ -62,6 +63,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 
         if request.method == 'POST':
             pass
+
         self.change_form_template = 'management/change_form.html'
         return super(InvoiceAdmin, self).change_view(request,
                                                      object_id,
@@ -82,6 +84,7 @@ class InvoiceAdmin(admin.ModelAdmin):
                 'send_ems', 'status', 'create_time'
             ]
             self.exclude = ['finish_time']
+        self.change_form_template = 'management/change_form.html'
         self.inlines = [InvoiceLogInline, ]
         return super(InvoiceAdmin, self).change_view(request,
                                                      object_id,

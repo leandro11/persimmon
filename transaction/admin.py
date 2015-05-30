@@ -444,58 +444,55 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
     @transaction.atomic
     def finish_view(self, request, object_id, form_url='', extra_context=None):
-        if not request.method == 'POST':
-            return super(TransactionOrderAdmin, self).change_view(request,
-                                                                  object_id,
-                                                                  form_url,
-                                                                  extra_context)
+        if request.method == 'POST':
+            self.change_form_template = 'management/order_change_form_for_service.html'
 
-        user_profile = get_user_profile(request.user)
-        group_type = None if user_profile is None else user_profile.grouptype
+            user_profile = get_user_profile(request.user)
+            group_type = None if user_profile is None else user_profile.grouptype
 
-        if not group_type in (StaffType.ZONE_SERVICE, StaffType.SERVICE_MANAGER, StaffType.TOP_MANAGER):
-            return render_to_response("management/notify.html", {
-                "info": u'仅有客服部总经理、区域客服、总经理有权限执行此操作',
-                "title": u'没有权限完成贴现',
-                'user': request.user,
-            })
+            if not group_type in (StaffType.ZONE_SERVICE, StaffType.SERVICE_MANAGER, StaffType.TOP_MANAGER):
+                return render_to_response("management/notify.html", {
+                    "info": u'仅有客服部总经理、区域客服、总经理有权限执行此操作',
+                    "title": u'没有权限完成贴现',
+                    'user': request.user,
+                })
 
-        order = TransactionOrder.objects.get(id=object_id)
-        info = u''
-        if not order.invoice_status == InvoiceStatus.INVOICE_FINISHED or not order.ticket_status == TicketStatus.TICKET_CHECKOUT:
-            info = u'该贴现服务尚有发票或汇票状态未完成，<a href="/transaction/transactionorder/%s">点击返回</a>' % order.id
-        else:
-            operation_list = TransactionOperation.objects.filter(transaction_id=order.id).all()
-            for op in operation_list:
-                if op.status != OperationStatus.OPERATION_FINISHED:
-                    info = u'该贴现服务尚有流程操作未完成，<a href="/transaction/transactionorder/%s">点击返回</a>' % order.id
-                    break
-        if info:
-            return render_to_response("management/notify.html", {
-                "info": info,
-                "title": u'贴现服务尚未完成',
-                'user': request.user,
-            })
-        else:
-            order.status = TransactionStatus.TRANSACTION_DONE
-            order.finish_time = datetime.datetime.now()
-            order.save()
+            order = TransactionOrder.objects.get(id=object_id)
+            info = u''
+            if not order.invoice_status == InvoiceStatus.INVOICE_FINISHED or not order.ticket_status == TicketStatus.TICKET_CHECKOUT:
+                info = u'该贴现服务尚有发票或汇票状态未完成，<a href="/transaction/transactionorder/%s">点击返回</a>' % order.id
+            else:
+                operation_list = TransactionOperation.objects.filter(transaction_id=order.id).all()
+                for op in operation_list:
+                    if op.status != OperationStatus.OPERATION_FINISHED:
+                        info = u'该贴现服务尚有流程操作未完成，<a href="/transaction/transactionorder/%s">点击返回</a>' % order.id
+                        break
+            if info:
+                return render_to_response("management/notify.html", {
+                    "info": info,
+                    "title": u'贴现服务尚未完成',
+                    'user': request.user,
+                })
+            else:
+                order.status = TransactionStatus.TRANSACTION_DONE
+                order.finish_time = datetime.datetime.now()
+                order.save()
 
-        return super(TransactionOrderAdmin, self).change_view(request,
-                                                              object_id,
-                                                              form_url,
-                                                              extra_context)
+            request._messages = FallbackStorage(request)
+            self.message_user(request, u'完成贴现', messages.SUCCESS)
+            return HttpResponseRedirect('/staff/transaction/transactionorder/%s/' % order.id)
 
     @transaction.atomic
     def add_invoice(self, request, object_id, form_url='', extra_context=None):
         invoices = Invoice.objects.filter(transaction_id=long(object_id))
         if invoices.count() > 0:
             return render_to_response("management/notify.html", {
-                "info": u'<h2>该贴现服务已有发票信息，<a href="/admin/ticket/invoice/%s">点击查看</a></h2>' % invoices.all()[0].id,
+                "info": u'<h2>该贴现服务已有发票信息，<a href="/staff/ticket/invoice/%s">点击查看</a></h2>' % invoices.all()[0].id,
                 "title": u'发票已存在',
                 'user': request.user,
             })
 
+        self.change_form_template = 'management/change_form.html'
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
 
@@ -536,6 +533,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         寄出发票
         '''
         invoices = Invoice.objects.filter(transaction_id=long(object_id))
+
         if invoices.count() < 1:
             return HttpResponseNotFound(u'<h1>该贴现服务尚未开具发票</h1>')
         elif invoices[0].status == InvoiceStatus.INVOICE_FINISHED:
@@ -544,7 +542,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
 
-        if request.user.is_superuser or group_type == StaffType.ACCOUNTANT:
+        if group_type == StaffType.ACCOUNTANT:
             self.inlines = [InvoiceEditInline]
             self.exclude = ['transaction_claim', 'finish_time', 'invoice', 'ticket']
             self.readonly_fields = [
@@ -555,6 +553,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
             extra_context = dict(title=u'贴现开具发票', )
         else:
             raise PermissionDenied
+
         return super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
 
     @transaction.atomic
@@ -736,13 +735,13 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
 
-        if request.user.is_superuser:
-            self.inlines = [TicketFormerHolderAddInline, TransactionOperationEditInline]
-            self.change_form_template = None
-            return super(TransactionOrderAdmin, self).change_view(request,
-                                                                  object_id,
-                                                                  form_url,
-                                                                  extra_context)
+        # if request.user.is_superuser:
+        #     self.inlines = [TicketFormerHolderAddInline, TransactionOperationEditInline]
+        #     self.change_form_template = None
+        #     return super(TransactionOrderAdmin, self).change_view(request,
+        #                                                           object_id,
+        #                                                           form_url,
+        #                                                           extra_context)
 
         order = TransactionOrder.objects.get(id=long(object_id))
         if order.status == TransactionStatus.TRANSACTION_PROCESSING:
@@ -788,7 +787,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
         elif group_type == StaffType.ACCOUNTANT:
             self.inlines = []
-            self.change_form_template = None
+            self.change_form_template = 'management/order_change_form_for_service.html'
             return super(TransactionOrderAdmin, self).change_view(request,
                                                                   object_id,
                                                                   form_url,
