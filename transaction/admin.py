@@ -575,10 +575,10 @@ class TransactionOrderAdmin(admin.ModelAdmin):
             'invoice_status', 'ticket_status', 'status', 'create_time'
         ]
         extra_context = dict(title=u'贴现汇票入库', )
+        self.change_form_template = 'management/change_form.html'
 
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
-
         if group_type not in (StaffType.TICKET_CONDUCTOR, StaffType.TICKET_DIRECTOR):
             raise PermissionDenied
 
@@ -593,7 +593,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                 request._messages = FallbackStorage(request)
                 self.message_user(request, u'汇票记录已添加', messages.SUCCESS)
                 ticket = TransactionTicket.objects.get(transaction_id=long(object_id))
-                return HttpResponseRedirect('/admin/ticket/transactionticket/%s/' % ticket.id)
+                return HttpResponseRedirect('/staff/ticket/transactionticket/%s/' % ticket.id)
 
         return super(TransactionOrderAdmin, self).change_view(request,
                                                               object_id,
@@ -705,7 +705,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
             self.list_display = [
                 'staff_name_link', 'payee_enterprise', 'payer_enterprise',
                 'ticket_bank_name', 'accept_bank_name', 'amount', 'fee',
-                'invoice_status', 'ticket_status', 'create_time', 'add_ticket_link'
+                'ticket_status', 'create_time', 'add_ticket_link'
             ]
         else:
             raise PermissionDenied
@@ -727,66 +727,6 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         )
 
         return super(TransactionOrderAdmin, self).changelist_view(request, extra_context)
-
-    # =============================================== TICKET LINK =====================================================
-    def add_ticket_link(self, obj):
-        # return u'<a class="button" href="/admin/transaction/transactionorder/%s/add_ticket"><strong>收票</strong></a>' % obj.id
-        if obj.ticket_status == TicketStatus.TICKET_UNRECEIVED:
-            return u'<a class="button" href="/admin/transaction/transactionorder/%s/add_ticket"><strong>收票</strong></a>' % obj.id
-        else:
-            return u'已收票'
-
-    add_ticket_link.allow_tags = True
-    add_ticket_link.short_description = u'收票'
-
-    def payee_enterprise(self, obj):
-        return obj.receivable_enterprise.name
-
-    payee_enterprise.allow_tags = True
-    payee_enterprise.short_description = u'收款企业'
-
-    def payer_enterprise(self, obj):
-        return obj.pay_enterprise.name
-
-    payer_enterprise.allow_tags = True
-    payer_enterprise.short_description = u'付款企业'
-
-    def ticket_bank_name(self, obj):
-        return obj.ticket_bank.name
-
-    ticket_bank_name.allow_tags = True
-    ticket_bank_name.short_description = u'贴现银行'
-
-    def accept_bank_name(self, obj):
-        return obj.accept_bank.name
-
-    accept_bank_name.allow_tags = True
-    accept_bank_name.short_description = u'承兑银行'
-
-    # =============================================== INVOICE LINK =====================================================
-    def add_invoice_link(self, obj):
-        if obj.invoice_status == InvoiceStatus.INVOICE_UNLODGED:
-            return u'<a class="button" href="/admin/transaction/transactionorder/%s/add_invoice"><strong>发票开具</strong></a>' % obj.id
-        else:
-            return u'已开票'
-
-    add_invoice_link.allow_tags = True
-    add_invoice_link.short_description = u'发票开具'
-
-    def send_invoice_link(self, obj):
-        if obj.invoice_status == InvoiceStatus.INVOICE_UNLODGED:
-            return u''
-        elif obj.invoice_status == InvoiceStatus.INVOICE_LODGED:
-            # invoice = Invoice.objects.get(transaction_id=obj.id)
-            return u'<a class="button" href="/admin/transaction/transactionorder/%s/send_invoice"><strong>发票寄出</strong></a>' % obj.id
-        elif obj.invoice_status == InvoiceStatus.INVOICE_ABORT:
-            return u'已作废'
-        elif obj.invoice_status == InvoiceStatus.INVOICE_FINISHED:
-            invoice = Invoice.objects.get(transaction_id=obj.id)
-            return u'<a href="/admin/ticket/invoice/%s"><strong>已寄出</strong></a>' % invoice.id
-
-    send_invoice_link.allow_tags = True
-    send_invoice_link.short_description = u'发票寄出'
 
     @transaction.atomic
     def change_view(self, request, object_id, form_url='', extra_context=None):
@@ -856,7 +796,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
         elif group_type in (StaffType.TICKET_DIRECTOR, StaffType.TICKET_CONDUCTOR):
             self.inlines = []
-            self.change_form_template = None
+            self.change_form_template = 'management/order_change_form_for_service.html'
             return super(TransactionOrderAdmin, self).change_view(request,
                                                                   object_id,
                                                                   form_url,
