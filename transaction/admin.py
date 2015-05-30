@@ -668,39 +668,42 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
         # only for member user
         if group_type in MemberUserType.values:
+            self.change_list_template = 'member/history_order_change_list.html'
+
             self.list_filter = ['status', ]
             self.list_display = [
                 'name_link', 'receivable_enterprise', 'pay_enterprise',
                 'ticket_bank', 'accept_bank', 'amount', 'fee', 'invoice_status',
                 'ticket_status', 'create_time'
             ]
-            self.change_list_template = 'member/history_order_change_list.html'
 
-            # todo restrict queryset 找出该单位参与的
-        elif group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_SERVICE,
+        elif group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_MARKET,
                             StaffType.SERVICE_MANAGER, StaffType.ZONE_SERVICE,
                             StaffType.TOP_MANAGER):
-            # todo @zhangnan for staff
-            self.change_list_template = 'management/change_list.html'
+            self.change_list_template = 'management/history_order_change_list.html'
 
             self.list_filter = ['status', ]
             self.list_display = [
-                'name_link', 'receivable_enterprise', 'pay_enterprise',
+                'staff_name_link', 'receivable_enterprise', 'pay_enterprise',
                 'ticket_bank', 'accept_bank', 'amount', 'fee', 'invoice_status',
                 'ticket_status', 'create_time'
             ]
         elif group_type == StaffType.ACCOUNTANT:
+            self.change_list_template = 'management/history_order_change_list.html'
+
             self.list_filter = ['invoice_status', ]
             self.list_display = [
-                'name_link', 'receivable_enterprise', 'pay_enterprise',
+                'staff_name_link', 'receivable_enterprise', 'pay_enterprise',
                 'amount', 'fee', 'invoice_status', 'ticket_status',
                 'create_time', 'add_invoice_link'
             ]
 
         elif group_type in (StaffType.TICKET_DIRECTOR, StaffType.TICKET_CONDUCTOR):
+            self.change_list_template = 'management/history_order_change_list.html'
+
             self.list_filter = ['ticket_status', ]
             self.list_display = [
-                'name_link', 'payee_enterprise', 'payer_enterprise',
+                'staff_name_link', 'payee_enterprise', 'payer_enterprise',
                 'ticket_bank_name', 'accept_bank_name', 'amount', 'fee',
                 'invoice_status', 'ticket_status', 'create_time', 'add_ticket_link'
             ]
@@ -827,18 +830,22 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                 user_role = OperatorType.OPERATOR_RECEIVER
             elif user_profile.enterprise.id == order.pay_enterprise.id:
                 user_role = OperatorType.OPERATOR_PAYER
+
         elif group_type in (MemberUserType.BANK_CONTACTOR, MemberUserType.BANK_OPERATOR):
             self.change_form_template = 'member/order_change_form_for_service.html'
             if user_profile.bank.id == order.ticket_bank.id:
                 user_role = OperatorType.OPERATOR_TICKETBANK
             elif user_profile.bank.id == order.accept_bank.id:
                 user_role = OperatorType.OPERATOR_ACCEPTBANK
-        elif group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_SERVICE):
+
+        elif group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_MARKET):
             self.change_form_template = 'management/order_change_form_for_service.html'
             user_role = OperatorType.OPERATOR_PLATFORM
+
         elif group_type in (StaffType.SERVICE_MANAGER, StaffType.ZONE_SERVICE):
             self.change_form_template = 'management/order_change_form_for_service.html'
             user_role = OperatorType.OPERATOR_PLATFORM
+
         elif group_type == StaffType.ACCOUNTANT:
             self.inlines = []
             self.change_form_template = None
@@ -846,6 +853,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                                                                   object_id,
                                                                   form_url,
                                                                   extra_context)
+
         elif group_type in (StaffType.TICKET_DIRECTOR, StaffType.TICKET_CONDUCTOR):
             self.inlines = []
             self.change_form_template = None
