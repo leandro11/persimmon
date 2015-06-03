@@ -43,7 +43,16 @@ class TicketFormerHolderAddInline(admin.TabularInline):
     model = TicketFormerHolder
     extra = 0
     can_delete = True
-    exclude = ['transaction', ]
+    exclude = ['agent_bank', 'transaction']
+    verbose_name = u'历史持票人'
+    verbose_name_plural = u'历史持票信息'
+
+
+class TicketFormerHolderConfirmInline(admin.TabularInline):
+    model = TicketFormerHolder
+    extra = 0
+    can_delete = True
+    exclude = ['transaction']
     verbose_name = u'历史持票人'
     verbose_name_plural = u'历史持票信息'
 

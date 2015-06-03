@@ -233,6 +233,7 @@ class TicketFormerHolder(models.Model):
     '''
     name = models.CharField(max_length=50, blank=False, null=False, verbose_name=u'持票人名称')
     claim = models.ForeignKey(TransactionClaim, blank=False, null=False, verbose_name=u'贴现发起记录')
+    agent_bank = models.ForeignKey(Bank, related_name='agent_bank', blank=True, null=True, verbose_name=u'当地代理行')
     transaction = models.ForeignKey(TransactionOrder, blank=True, null=True, verbose_name=u'贴现服务订单')
 
     class Meta:

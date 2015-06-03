@@ -261,7 +261,7 @@ class TransactionClaimAdmin(admin.ModelAdmin):
 
     @transaction.atomic
     def confirm_view(self, request, object_id, form_url='', extra_context=None):
-        self.inlines = [TicketFormerHolderAddInline, TransactionOrderConfirmInline]
+        self.inlines = [TicketFormerHolderConfirmInline, TransactionOrderConfirmInline]
         self.exclude = ['status']
 
         # This application has been confirmed
