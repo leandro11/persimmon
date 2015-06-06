@@ -239,6 +239,7 @@ OperatorType = Enum({
     'OPERATOR_TICKETBANK': ('TICKETBANK', u'贴现银行'),
     'OPERATOR_ACCEPTBANK': ('ACCEPTBANK', u'承兑银行'),
     'OPERATOR_PLATFORM': ('PLATFORM', u'怡智融通'),
+    'OPERATOR_TICKETHOLDER': ('HOLDER', u'代理行'),
 })
 
 OPERATOR_TYPE = [(item[0], item[1]) for item in OperatorType.choices]

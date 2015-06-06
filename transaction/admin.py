@@ -297,8 +297,6 @@ class TransactionClaimAdmin(admin.ModelAdmin):
                 request._messages = FallbackStorage(request)
                 self.message_user(request, u'贴现申请已通过审核', messages.SUCCESS)
 
-                # return changelist view
-                # return super(TransactionClaimAdmin, self).changelist_view(request, extra_context)
                 return self.changelist_view(request, extra_context)
 
             return result
@@ -336,8 +334,19 @@ class TransactionClaimAdmin(admin.ModelAdmin):
                 is_first = True
                 meta_operation_list = TransactionMetaOperation.objects.filter(
                     transaction_type=transaction_type_id).order_by('sequence')
+                ticket_holders_num = TicketFormerHolder.objects.filter(
+                    transaction__id=order_id).count()
+
+                operation_list = []
+                operations_for_ticketholders = []
                 for meta_operation in meta_operation_list:
-                    operation = TransactionOperation(
+                    if meta_operation.operator_member == OperatorType.OPERATOR_TICKETHOLDER:
+                        operations_for_ticketholders.append(meta_operation)
+
+                        if len(operations_for_ticketholders) > ticket_holders_num:
+                            continue
+
+                    op = TransactionOperation(
                         transaction_id=order_id,
                         sequence=meta_operation.sequence,
                         operation_type=meta_operation.operation_type,
@@ -346,14 +355,15 @@ class TransactionClaimAdmin(admin.ModelAdmin):
                         need_upload=meta_operation.need_upload,
                         need_ems=meta_operation.need_ems,
                         operator_member=meta_operation.operator_member,
-                        file_name=meta_operation.file_name
+                        file_name=meta_operation.file_name,
                     )
+                    operation_list.append(op)
 
-                    # active first operation
-                    if is_first:
-                        operation.status = OperationStatus.OPERATION_ACTIVATED
-                        is_first = False
-                    operation.save()
+                if operation_list:
+                    operation_list[0].status = OperationStatus.OPERATION_ACTIVATED
+
+                map(lambda x: x.save(), operation_list)
+
             form.instance.status = TransactionClaimStatus.CLAIM_PASSED
             form.instance.save()
 
