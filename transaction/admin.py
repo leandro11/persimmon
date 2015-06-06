@@ -310,29 +310,25 @@ class TransactionClaimAdmin(admin.ModelAdmin):
             super(TransactionClaimAdmin, self).save_related(request, form, formsets, change)
         else:
             form.save_m2m()
+            transaction_order_set = next((formset for formset in formsets \
+                if formset.form.Meta.model == TransactionOrder and formset.has_changed()), None)
+
             order_id = None
             transaction_type_id = None
-            receivable_enterprise_id = None
-            pay_enterprise_id = None
-            ticket_bank_id = None
-            accept_bank_id = None
+
+            for inline_form in transaction_order_set.forms:
+                inline_form.instance.ticket_number = form.instance.ticket_number
+                inline_form.instance.amount = form.instance.amount
+                inline_form.save()
+                order_id = inline_form.instance.id
+                transaction_type_id = inline_form.instance.type_id
+            transaction_order_set.save()
+
             for formset in formsets:
-                if formset.form.Meta.model is TransactionOrder and formset.has_changed():
+                if formset.form.Meta.model is TicketFormerHolder:
                     for inline_form in formset.forms:
-                        inline_form.instance.ticket_number = form.instance.ticket_number
-                        inline_form.instance.amount = form.instance.amount
-                        receivable_enterprise_id = form.instance.receivable_enterprise_id
-                        pay_enterprise_id = inline_form.instance.pay_enterprise_id
-                        ticket_bank_id = inline_form.instance.ticket_bank_id
-                        accept_bank_id = inline_form.instance.accept_bank_id
-                        transaction_type_id = inline_form.instance.type_id
-                        formset.save()
-                        order_id = inline_form.instance.id
-                elif formset.form.Meta.model is TicketFormerHolder:
-                    if transaction_type_id:
-                        for inline_form in formset.forms:
-                            inline_form.instance.transaction_id = order_id
-                            inline_form.save()
+                        inline_form.instance.transaction_id = order_id
+                        inline_form.save()
                     formset.save()
 
             # Generate process according to different process templates
@@ -427,8 +423,6 @@ class TransactionOrderAdmin(admin.ModelAdmin):
     inlines = []
     exclude = ['transaction_claim', ]
     list_display = ['ticket_number', 'amount', 'fee', 'status']
-    # list_display = ['ticket_number', 'type', 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'status']
-    # 'receivable_enterprise', 'pay_enterprise', 'ticket_bank', 'accept_bank', 'amount', 'type', 'fee', 'status']
     search_fields = ['ticket_number', ]
     list_filter = ['status', ]
 
@@ -734,14 +728,6 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
-
-        # if request.user.is_superuser:
-        #     self.inlines = [TicketFormerHolderAddInline, TransactionOperationEditInline]
-        #     self.change_form_template = None
-        #     return super(TransactionOrderAdmin, self).change_view(request,
-        #                                                           object_id,
-        #                                                           form_url,
-        #                                                           extra_context)
 
         order = TransactionOrder.objects.get(id=long(object_id))
         if order.status == TransactionStatus.TRANSACTION_PROCESSING:

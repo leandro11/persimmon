@@ -63,7 +63,7 @@ class TicketFormerHolderReadonlyInline(admin.TabularInline):
     max_num = 0
     can_delete = False
     exclude = ['claim', ]
-    readonly_fields = ['name', ]
+    readonly_fields = ['name', 'agent_bank']
     verbose_name = u'历史持票人'
     verbose_name_plural = u'历史持票信息'
 

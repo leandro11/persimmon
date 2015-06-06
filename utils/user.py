@@ -172,6 +172,126 @@ def create_meta_operation():
     op7.save()
 
 
+def create_transaction_type_2_meta_operation():
+    mm = TransactionMetaOperation.objects.filter(
+        transaction_type_id=TransactionCategory.TRANSACTION_TYPE2)
+    [t.delete() for t in mm]
+
+    op1 = TransactionMetaOperation(
+        sequence=1,
+        operation_type=OperationType.OPERATION_UPLOAD,
+        operator_member=OperatorType.OPERATOR_RECEIVER,
+        description=u'传真并上传代理委托协议',
+        need_upload=True,
+        need_ems=False,
+        need_confirm=True,
+        file_name=None,
+        transaction_type_id=TransactionCategory.TRANSACTION_TYPE2,
+    )
+
+    op2 = TransactionMetaOperation(
+        sequence=2,
+        operation_type=OperationType.OPERATION_UPLOAD,
+        operator_member=OperatorType.OPERATOR_RECEIVER,
+        description=u'上传汇票',
+        need_upload=True,
+        need_ems=False,
+        need_confirm=True,
+        file_name=None,
+        transaction_type_id=TransactionCategory.TRANSACTION_TYPE2,
+    )
+
+    op3 = TransactionMetaOperation(
+        sequence=3,
+        operation_type=OperationType.OPERATION_UPLOAD,
+        operator_member=OperatorType.OPERATOR_PAYER,
+        description=u'上传票据权利无瑕疵声明',
+        need_upload=True,
+        need_ems=False,
+        need_confirm=True,
+        file_name=None,
+        transaction_type_id=TransactionCategory.TRANSACTION_TYPE2,
+    )
+
+    op4 = TransactionMetaOperation(
+        sequence=4,
+        operation_type=OperationType.OPERATION_UPLOAD,
+        operator_member=OperatorType.OPERATOR_ACCEPTBANK,
+        description=u'上传票据权利无瑕疵声明',
+        need_upload=True,
+        need_ems=False,
+        need_confirm=True,
+        file_name=None,
+        transaction_type_id=TransactionCategory.TRANSACTION_TYPE2,
+    )
+
+    op5 = TransactionMetaOperation(
+        sequence=5,
+        operation_type=OperationType.OPERATION_UPLOAD,
+        operator_member=OperatorType.OPERATOR_ACCEPTBANK,
+        description=u'票据真伪鉴定书',
+        need_upload=True,
+        need_ems=True,
+        need_confirm=True,
+        file_name=None,
+        transaction_type_id=TransactionCategory.TRANSACTION_TYPE2,
+    )
+
+    op6 = TransactionMetaOperation(
+        sequence=6,
+        operation_type=OperationType.OPERATION_CONFIRM,
+        operator_member=OperatorType.OPERATOR_PLATFORM,
+        description=u'票据权利无瑕疵声明',
+        need_upload=False,
+        need_ems=False,
+        need_confirm=True,
+        file_name=None,
+        transaction_type_id=TransactionCategory.TRANSACTION_TYPE2,
+    )
+    op7 = TransactionMetaOperation(
+        sequence=7,
+        operation_type=OperationType.OPERATION_EMS,
+        operator_member=OperatorType.OPERATOR_PLATFORM,
+        description=u'邮寄汇票至贴现银行',
+        need_upload=False,
+        need_ems=True,
+        need_confirm=True,
+        file_name=None,
+        transaction_type_id=TransactionCategory.TRANSACTION_TYPE2,
+    )
+    op8 = TransactionMetaOperation(
+        sequence=8,
+        operation_type=OperationType.OPERATION_CONFIRM,
+        operator_member=OperatorType.OPERATOR_ACCEPTBANK,
+        description=u'确认',
+        need_upload=False,
+        need_ems=False,
+        need_confirm=True,
+        file_name=None,
+        transaction_type_id=TransactionCategory.TRANSACTION_TYPE2,
+    )
+    op9 = TransactionMetaOperation(
+        sequence=9,
+        operation_type=OperationType.OPERATION_CONFIRM,
+        operator_member=OperatorType.OPERATOR_TICKETBANK,
+        description=u'确认收款',
+        need_upload=False,
+        need_ems=False,
+        need_confirm=True,
+        file_name=None,
+        transaction_type_id=TransactionCategory.TRANSACTION_TYPE2,
+    )
+    op1.save()
+    op2.save()
+    op3.save()
+    op4.save()
+    op5.save()
+    op6.save()
+    op7.save()
+    op8.save()
+    op9.save()
+
+
 if __name__ == '__main__':
     print 'hello'
     create_meta_operation()
