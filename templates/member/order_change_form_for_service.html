@@ -168,6 +168,21 @@
                         客服电话：010-12345678<br/>
                         <a href="111">在线联系客服</a>
                     </div>
+                {% elif operation.operator_member == OPERATOR_TICKETHOLDER %}
+                    href="#{{ ticket_holders_manager.get_agent_bank.id }}">
+                    <img src="/static/style/img/icon_info.png"><strong>{{ ticket_holders_manager.get_agent_bank.short_name }}</strong></a>
+                    <input type="hidden" value="{{ ticket_holders_manager.get_agent_bank.id }}" name="member_id" id="member_id">
+                    <div unselectable="on" id="{{ operation.operator_member }}_{{ operation.id }}" class="tipscontent" style="display: none">
+                        <b>{{ ticket_holders_manager.get_agent_bank.name }}</b>
+                        <a style="float:right" href="#{{ operation.operator_member }}_{{ operation.id }}" onclick="ShowTips('{{ operation.operator_member }}_{{ operation.id }}');return false;">[关闭窗口]</a><br/>
+                        会员等级：{{ ticket_holders_manager.get_agent_bank.level }}星会员<br/>
+                        地址：{{ ticket_holders_manager.get_agent_bank.address }}<br/>
+                        传真：{{ ticket_holders_manager.get_agent_bank.fax_number }}<br/>
+                        联络人：{{ ticket_holders_manager.get_agent_bank.contactor.name }}<br/>
+                        联络人电话：{{ ticket_holders_manager.get_agent_bank.contactor.mobile_number }}<br/>
+                        联络人邮箱：{{ ticket_holders_manager.get_agent_bank.contactor.email }}<br/>
+                        {{ ticket_holders_manager.increment }}
+                    </div>
                 {% endif %}
             </div>
             </td>
@@ -195,6 +210,26 @@
                         <input type="submit" value="完成流程" id="" name="operation_submit_{{ operation.id }}" onclick="
                                 if(!validate({% if operation.need_upload %}'upload_file_{{ operation.id }}'{% else %}''{% endif %},{% if operation.need_ems %}'ems_number_{{ operation.id }}'{% else %}''{% endif %})) {return false;}">
 
+                 {% elif operation.operator_member == ticket_holder_role and operation.status == OPERATION_ACTIVATED %}
+                        <input type="hidden" value="{{ operation.id }}" name="operation_id" id="operation_id">
+                        <input type="hidden" value="{{ order.id }}" name="order_id" id="order_id">
+
+                        {% if operation.need_upload or operation.need_ems %}
+                            <hr size="3"/>
+                        {% endif %}
+
+                        {% if operation.need_upload %}
+                            文件上传：<!--id和name不能随便修改-->
+                            <input id="upload_file_{{ operation.id }}" name="upload_file_{{ operation.id }}" type="file" /></br>
+                        {% endif %}
+
+                        {% if operation.need_ems %}
+                            提交EMS单号：
+                            <input id="ems_number_{{ operation.id }}" name="ems_number_{{ operation.id }}" type="text" value="" maxlength="13"></br>
+
+                        {% endif %}
+                        <input type="submit" value="完成流程" id="" name="operation_submit_{{ operation.id }}" onclick="
+                                if(!validate({% if operation.need_upload %}'upload_file_{{ operation.id }}'{% else %}''{% endif %},{% if operation.need_ems %}'ems_number_{{ operation.id }}'{% else %}''{% endif %})) {return false;}">
                 {% else %} <!-- not self, show link  -->
                     {% if operation.need_upload and operation.upload_file %}
                         <hr size="3"/>

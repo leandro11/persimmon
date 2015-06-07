@@ -33,7 +33,6 @@ def get_profile_name(user):
     else:
         return ''
 
-
 register.filter('get_profile_name', get_profile_name)
 
 
@@ -44,7 +43,6 @@ def get_group_name(user):
         return user_profile.groupname
     else:
         return ''
-
 
 register.filter('get_group_name', get_group_name)
 
@@ -66,7 +64,6 @@ def get_operator_user_link(operation):
                % (tagid, tagid, user_profile.name, tagid, user_profile.name, tagid, group_name, user_profile.mobile_number, telephone)
     else:
         return 'error_no_profile'
-
 
 register.filter('get_operator_user_link', get_operator_user_link)
 
@@ -91,8 +88,14 @@ def get_processing_operation(order):
 
     return '<tr class="row1">' + res + '</tr>'
 
-
 register.filter('get_processing_operation', get_processing_operation)
+
+
+def increment_count(count):
+    count += 1
+    return count
+
+register.filter('increment_count', increment_count)
 
 
 def show_operation_attachment(file):
@@ -103,6 +106,5 @@ def show_operation_attachment(file):
         return u'<p><a href="%s"><img width="100px" src="%s" /><br/><b>查看附件</b></a></p>' % (file.url, file.url)
     else:
         return u'<p><a href="%s"><img width="100px" src="/static/style/img/doc.png" /><br/><b>查看附件</b></a></p>' % file.url
-
 
 register.filter('show_operation_attachment', show_operation_attachment)

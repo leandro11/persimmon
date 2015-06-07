@@ -738,6 +738,8 @@ class TransactionOrderAdmin(admin.ModelAdmin):
 
         user_profile = get_user_profile(request.user)
         group_type = None if user_profile is None else user_profile.grouptype
+        user_role = None
+        ticket_holder_role = None
 
         order = TransactionOrder.objects.get(id=long(object_id))
         if order.status == TransactionStatus.TRANSACTION_PROCESSING:
@@ -759,6 +761,12 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                 'create_time', 'finish_time', 'invoice_status', 'ticket_status'
             ]
 
+        operation_list = TransactionOperation.objects.filter(transaction_id=order.id).all()
+
+        ticket_holders = TicketFormerHolder.objects.filter(transaction=order).order_by('id')
+        ticket_holder_ops = [op for op in operation_list if op.operator_member == OperatorType.OPERATOR_TICKETHOLDER]
+        assert(len(ticket_holder_ops) == len(ticket_holders))
+
         if group_type in (MemberUserType.ENTERPRISE_CONTACTOR, MemberUserType.ENTERPRISE_OPERATOR):
             self.change_form_template = 'member/order_change_form_for_service.html'
             if user_profile.enterprise.id == order.receivable_enterprise.id:
@@ -772,6 +780,11 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                 user_role = OperatorType.OPERATOR_TICKETBANK
             elif user_profile.bank.id == order.accept_bank.id:
                 user_role = OperatorType.OPERATOR_ACCEPTBANK
+
+            for holder in ticket_holders:
+                if holder.agent_bank.id == user_profile.bank.id and not holder.has_confirmed:
+                    ticket_holder_role = OperatorType.OPERATOR_TICKETHOLDER
+                    break
 
         elif group_type in (StaffType.MARKET_MANAGER, StaffType.ZONE_MARKET):
             self.change_form_template = 'management/order_change_form_for_service.html'
@@ -799,13 +812,12 @@ class TransactionOrderAdmin(admin.ModelAdmin):
         else:
             raise PermissionDenied
 
-        operation_list = TransactionOperation.objects.filter(transaction_id=order.id).all()
-
         # If all the operations have been finished
         operation_alldone = False
         if all(op.status == OperationStatus.OPERATION_FINISHED for op in operation_list):
                 operation_alldone = True
 
+        ticket_holders_manager = TicketHoldersManager(ticket_holders)
         extra_context = dict(operation_list=operation_list,
                              title=u'查看贴现服务',
                              OPERATION_UNACTIVATED=OperationStatus.OPERATION_UNACTIVATED,
@@ -822,6 +834,7 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                              OPERATOR_TICKETBANK=OperatorType.OPERATOR_TICKETBANK,
                              OPERATOR_ACCEPTBANK=OperatorType.OPERATOR_ACCEPTBANK,
                              OPERATOR_PLATFORM=OperatorType.OPERATOR_PLATFORM,
+                             OPERATOR_TICKETHOLDER=OperatorType.OPERATOR_TICKETHOLDER,
 
                              INVOICE_FINISHED=InvoiceStatus.INVOICE_FINISHED,
                              TICKET_CHECKOUT=TicketStatus.TICKET_CHECKOUT,
@@ -830,6 +843,8 @@ class TransactionOrderAdmin(admin.ModelAdmin):
                              operation_alldone=operation_alldone,
                              order=order,
                              user_role=user_role,
+                             ticket_holder_role=ticket_holder_role,
+                             ticket_holders_manager=ticket_holders_manager,
         )
         return super(TransactionOrderAdmin, self).change_view(request, object_id, form_url, extra_context)
 
@@ -911,8 +926,17 @@ class TransactionOperationAdmin(admin.ModelAdmin):
             operation.status = OperationStatus.OPERATION_PENDING
         else:
             operation.status = OperationStatus.OPERATION_FINISHED
+
+            # if operation.operator_member == OPERATOR_TYPE.OPERATOR_TICKETHOLDER:
+            #     obj = TicketFormerHolder.objects.get(agent_bank__id=member_id,
+            #                                          transaction__id=order_id)
+            #     obj.has_confirmed = True
+            #     obj.save()
+
             # 自动激活下一个贴现操作
-            operation_list = TransactionOperation.objects.filter(transaction_id=operation.transaction_id).order_by('sequence').all()
+            operation_list = TransactionOperation.objects.filter(
+                transaction_id=operation.transaction_id).order_by('sequence').all()
+
             for i in range(operation_list.count()):
                 if operation.id == operation_list[i].id:
                     if i + 1 < operation_list.count():
@@ -944,6 +968,7 @@ class TransactionOperationAdmin(admin.ModelAdmin):
         # operation.finish_time = datetime.datetime.now()
         # todo 审核时间
         operation.save()
+
         # 激活下一个贴现操作
         operation_list = TransactionOperation.objects.filter(
             transaction_id=operation.transaction_id,
@@ -966,9 +991,6 @@ class TransactionOperationAdmin(admin.ModelAdmin):
 
 
 member_site.register(TransactionOperation, TransactionOperationAdmin)
-
 management_site.register(TransactionOperation, TransactionOperationAdmin)
-
 admin.site.register(TransactionOperation, TransactionOperationAdmin)
-
 

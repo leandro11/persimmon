@@ -43,7 +43,7 @@ class TicketFormerHolderAddInline(admin.TabularInline):
     model = TicketFormerHolder
     extra = 0
     can_delete = True
-    exclude = ['agent_bank', 'transaction']
+    exclude = ['agent_bank', 'transaction', 'has_confirmed']
     verbose_name = u'历史持票人'
     verbose_name_plural = u'历史持票信息'
 
@@ -52,7 +52,7 @@ class TicketFormerHolderConfirmInline(admin.TabularInline):
     model = TicketFormerHolder
     extra = 0
     can_delete = True
-    exclude = ['transaction']
+    exclude = ['transaction', 'has_confirmed']
     verbose_name = u'历史持票人'
     verbose_name_plural = u'历史持票信息'
 
@@ -62,7 +62,7 @@ class TicketFormerHolderReadonlyInline(admin.TabularInline):
     extra = 0
     max_num = 0
     can_delete = False
-    exclude = ['claim', ]
+    exclude = ['claim', 'has_confirmed']
     readonly_fields = ['name', 'agent_bank']
     verbose_name = u'历史持票人'
     verbose_name_plural = u'历史持票信息'

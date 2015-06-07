@@ -235,6 +235,7 @@ class TicketFormerHolder(models.Model):
     claim = models.ForeignKey(TransactionClaim, blank=False, null=False, verbose_name=u'贴现发起记录')
     agent_bank = models.ForeignKey(Bank, related_name='agent_bank', blank=True, null=True, verbose_name=u'当地代理行')
     transaction = models.ForeignKey(TransactionOrder, blank=True, null=True, verbose_name=u'贴现服务订单')
+    has_confirmed = models.BooleanField(default=False, verbose_name=u'代理行确认')
 
     class Meta:
         verbose_name = u'历史持票人'
@@ -315,3 +316,22 @@ class TransactionOperation(models.Model):
         super(TransactionOperation, self).save(force_insert, force_update, using, update_fields)
 
         # through='Membership', through_fields=('group', 'person')
+
+
+class TicketHoldersManager(object):
+
+    def __init__(self, ticket_holders):
+        self.count = 0
+        self.ticket_holders = ticket_holders
+
+    def increment(self):
+        self.count += 1
+
+        if self.count == len(self.ticket_holders):
+            self.reset()
+
+    def reset(self):
+        self.count = 0
+
+    def get_agent_bank(self):
+        return self.ticket_holders[self.count].agent_bank
